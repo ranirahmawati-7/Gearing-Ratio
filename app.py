@@ -100,14 +100,22 @@ df["Periode_Label"] = (
 )
 
 # ===============================
-# FLAG AUDITED (PRIORITAS)
+# FLAG AUDITED
 # ===============================
 df["Is_Audited"] = df["Periode_Raw"].str.contains(
     "audit", case=False, na=False
 ).astype(int)
 
 # ===============================
-# CLEAN VALUE (AMAN FORMAT INDONESIA)
+# LABEL FINAL (AUDITED DITULIS)
+# ===============================
+df["Periode_Label_Final"] = df["Periode_Label"]
+df.loc[df["Is_Audited"] == 1, "Periode_Label_Final"] = (
+    df.loc[df["Is_Audited"] == 1, "Periode_Label"] + " (Audited)"
+)
+
+# ===============================
+# CLEAN VALUE
 # ===============================
 def parse_value(val):
     if pd.isna(val):
@@ -116,8 +124,6 @@ def parse_value(val):
         return float(val)
 
     text = str(val).strip()
-
-    # format Indonesia: 516.859.837.493,95
     if "." in text and "," in text:
         text = text.replace(".", "").replace(",", ".")
     elif "." in text and "," not in text:
@@ -137,21 +143,16 @@ st.sidebar.header("🔎 Filter Data")
 
 df_f = df.copy()
 
-# ===============================
-# FILTER TAHUN
-# ===============================
+# Filter Tahun
 available_years = sorted(df_f["Year"].unique())
 selected_years = st.sidebar.multiselect(
     "Tahun",
     available_years,
     default=available_years
 )
-
 df_f = df_f[df_f["Year"].isin(selected_years)]
 
-# ===============================
-# FILTER BULAN
-# ===============================
+# Filter Bulan
 df_f["Bulan_Nama"] = df_f["Month"].map(bulan_id)
 
 selected_months = st.sidebar.multiselect(
@@ -159,11 +160,10 @@ selected_months = st.sidebar.multiselect(
     list(bulan_id.values()),
     default=list(bulan_id.values())
 )
-
 df_f = df_f[df_f["Bulan_Nama"].isin(selected_months)]
 
 # ===============================
-# PREVIEW DATA (MENTAH - TANPA AGREGASI)
+# PREVIEW DATA
 # ===============================
 st.subheader("👀 Preview Data (Raw / As Is)")
 st.dataframe(
@@ -172,23 +172,24 @@ st.dataframe(
 )
 
 # ===============================
-# AGREGASI KHUSUS KUR (AUDITED PRIORITY)
+# AGREGASI KUR (AUDITED PRIORITY)
 # ===============================
 st.subheader("📈 OS Penjaminan KUR")
 
 df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
 
-# Urutkan: audited diutamakan
 df_kur_sorted = df_kur.sort_values(
     ["SortKey", "Is_Audited"],
     ascending=[True, False]
 )
 
-# Ambil audited jika ada, jika tidak ambil data biasa
 df_kur_agg = (
     df_kur_sorted
-    .groupby(["SortKey", "Periode_Label"], as_index=False)
-    .agg(OS_KUR_Rp=("Value", "last"))
+    .groupby("SortKey", as_index=False)
+    .agg(
+        Periode_Label_Final=("Periode_Label_Final", "first"),
+        OS_KUR_Rp=("Value", "sum")
+    )
     .sort_values("SortKey")
 )
 
@@ -199,7 +200,7 @@ df_kur_agg["OS_KUR_T"] = df_kur_agg["OS_KUR_Rp"] / 1_000_000_000_000
 # ===============================
 fig = px.area(
     df_kur_agg,
-    x="Periode_Label",
+    x="Periode_Label_Final",
     y="OS_KUR_T",
     markers=True
 )
@@ -214,14 +215,14 @@ fig.update_layout(
 fig.update_xaxes(
     type="category",
     categoryorder="array",
-    categoryarray=df_kur_agg["Periode_Label"].tolist(),
+    categoryarray=df_kur_agg["Periode_Label_Final"].tolist(),
     tickangle=-45
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
-# TABEL HASIL OLAHAN
+# TABEL HASIL
 # ===============================
 st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR")
 
