@@ -43,7 +43,12 @@ except Exception as e:
 # PREVIEW DATA
 # ===============================
 st.subheader("👀 Preview Data")
-st.dataframe(df, use_container_width=True)
+st.dataframe(
+    df_f.style.format({
+        "Value": "Rp {:,.2f}"
+    }),
+    use_container_width=True
+)
 
 # ===============================
 # BASIC CLEANING
