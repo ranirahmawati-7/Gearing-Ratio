@@ -120,21 +120,59 @@ else:
     )
 
 # ===============================
-# LINE CHART – TREN
+# LINE / AREA CHART – TREN PER BULAN (AGREGAT TAHUNAN)
 # ===============================
-st.subheader("📈 Tren Outstanding")
+st.subheader("📈 Tren Outstanding (Akumulasi Tahunan per Bulan)")
 
 needed_cols = {"Periode", "Value", "Jenis"}
 
 if needed_cols.issubset(df_f.columns):
-    fig = px.line(
-        df_f,
-        x="Periode",
+
+    df_tren = df_f.copy()
+
+    # Pastikan Periode datetime
+    df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
+
+    # Ambil komponen waktu
+    df_tren["Tahun"] = df_tren["Periode"].dt.year
+    df_tren["Bulan"] = df_tren["Periode"].dt.month
+    df_tren["Tanggal"] = df_tren["Periode"].dt.day
+
+    # Label bulan + tanggal (contoh: 31 Januari)
+    df_tren["Bulan_Tanggal"] = (
+        df_tren["Tanggal"].astype(str)
+        + " "
+        + df_tren["Periode"].dt.month_name(locale="id")
+    )
+
+    # Agregasi: jumlah Value per Tahun, Bulan_Tanggal, Jenis
+    agg_df = (
+        df_tren
+        .groupby(["Tahun", "Bulan", "Bulan_Tanggal", "Jenis"], as_index=False)
+        ["Value"]
+        .sum()
+        .sort_values(["Tahun", "Bulan"])
+    )
+
+    # Area chart (line + bayangan)
+    fig = px.area(
+        agg_df,
+        x="Bulan_Tanggal",
         y="Value",
         color="Jenis",
-        markers=True
+        line_group="Tahun",
+        markers=True,
+        title="Tren Outstanding (Akumulasi Tahunan per Bulan)"
     )
+
+    fig.update_layout(
+        xaxis_title="Periode (Tanggal - Bulan)",
+        yaxis_title="Total Outstanding",
+        hovermode="x unified"
+    )
+
     st.plotly_chart(fig, use_container_width=True)
+
 else:
     st.warning(
         f"❌ Grafik tren tidak dapat ditampilkan. Kolom kurang: "
