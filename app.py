@@ -142,41 +142,47 @@ st.dataframe(
 )
 
 # ===============================
-# AREA CHART – OUTSTANDING
+# AREA CHART – OUTSTANDING (KUR GEN 1 + GEN 2)
 # ===============================
-st.subheader("📈 Outstanding per Bulan")
+st.subheader("📈 Outstanding KUR (Gen 1 + Gen 2)")
 
-agg_df = (
-    df_f
-    .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
-    .sum()
-    .sort_values("SortKey")
-)
+# FILTER KHUSUS KUR GEN 1 & GEN 2
+df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])].copy()
 
-agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
+if df_kur.empty:
+    st.warning("Data KUR Gen 1 & Gen 2 tidak tersedia")
+else:
+    agg_df = (
+        df_kur
+        .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
+        .sum()
+        .sort_values("SortKey")
+    )
 
-fig = px.area(
-    agg_df,
-    x="Periode_Label",
-    y="Value_T",
-    markers=True
-)
+    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
 
-fig.update_layout(
-    xaxis_title="Periode",
-    yaxis_title="Outstanding (T)",
-    yaxis=dict(ticksuffix=" T"),
-    hovermode="x unified"
-)
+    fig = px.area(
+        agg_df,
+        x="Periode_Label",
+        y="Value_T",
+        markers=True
+    )
 
-fig.update_xaxes(
-    type="category",
-    categoryorder="array",
-    categoryarray=agg_df["Periode_Label"].tolist(),
-    tickangle=-45
-)
+    fig.update_layout(
+        xaxis_title="Periode",
+        yaxis_title="Outstanding KUR (T)",
+        yaxis=dict(ticksuffix=" T"),
+        hovermode="x unified"
+    )
 
-st.plotly_chart(fig, use_container_width=True)
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=agg_df["Periode_Label"].tolist(),
+        tickangle=-45
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
 # TABLE DETAIL
