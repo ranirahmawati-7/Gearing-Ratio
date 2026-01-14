@@ -1,7 +1,12 @@
+import streamlit as st
 import pandas as pd
+import plotly.express as px
+
+# TAMBAHKAN INI
 import matplotlib.pyplot as plt
 import calendar
 import re
+
 
 # ===============================
 # LOAD DATA
