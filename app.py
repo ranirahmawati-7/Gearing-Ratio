@@ -46,7 +46,7 @@ st.subheader("👀 Preview Data")
 st.dataframe(df, use_container_width=True)
 
 # ===============================
-# BASIC CLEANING (AMAN)
+# BASIC CLEANING
 # ===============================
 if "Periode" in df.columns:
     df["Periode"] = pd.to_datetime(df["Periode"], errors="coerce")
@@ -64,7 +64,7 @@ if "Jumlah Debitur" in df.columns:
     df["Jumlah Debitur"] = pd.to_numeric(df["Jumlah Debitur"], errors="coerce")
 
 # ===============================
-# SIDEBAR FILTER (DINAMIS)
+# SIDEBAR FILTER
 # ===============================
 st.sidebar.header("🔎 Filter")
 
@@ -86,7 +86,6 @@ if "Generasi" in df.columns:
 else:
     gen_filter = []
 
-# FILTER DATA
 df_f = df.copy()
 
 if "Jenis" in df.columns and jenis_filter:
@@ -96,9 +95,28 @@ if "Generasi" in df.columns and gen_filter:
     df_f = df_f[df_f["Generasi"].isin(gen_filter)]
 
 # ===============================
-# LINE / AREA CHART – TOTAL PER BULAN (KUR Gen 1 + KUR Gen 2, SEMUA TAHUN)
+# BAR CHART – JUMLAH DEBITUR
 # ===============================
-st.subheader("📈 Tren OS Penjamin KUR")
+st.subheader("👥 Jumlah Debitur")
+
+needed_cols = {"Jenis", "Jumlah Debitur"}
+
+if needed_cols.issubset(df_f.columns):
+    deb_df = df_f.groupby("Jenis", as_index=False)["Jumlah Debitur"].sum()
+
+    fig = px.bar(
+        deb_df,
+        x="Jenis",
+        y="Jumlah Debitur",
+        text_auto=True,
+        title="Jumlah Debitur"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# ===============================
+# AREA CHART – TOTAL BULANAN (KUR GEN 1 + GEN 2)
+# ===============================
+st.subheader("📈 Tren Outstanding per Bulan (KUR Gen 1 + KUR Gen 2)")
 
 needed_cols = {"Periode", "Value", "Jenis"}
 
@@ -106,16 +124,12 @@ if needed_cols.issubset(df_f.columns):
 
     df_tren = df_f.copy()
 
-    # Filter hanya KUR Gen 1 & KUR Gen 2
+    # Filter KUR Gen 1 & Gen 2
     df_tren = df_tren[df_tren["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
 
-    # Pastikan datetime
     df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
-
-    # Ambil bulan
     df_tren["Bulan"] = df_tren["Periode"].dt.month
 
-    # Mapping bulan Indonesia
     bulan_id = {
         1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
         5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
@@ -123,41 +137,43 @@ if needed_cols.issubset(df_f.columns):
     }
     df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
 
-    # Agregasi: SUM Value per Bulan (gabungkan KUR Gen 1 + KUR Gen 2, semua tahun)
+    # Agregasi semua tahun
     agg_df = df_tren.groupby("Nama_Bulan", as_index=False)["Value"].sum()
 
-    # Urutkan bulan Jan → Des
     urutan_bulan = list(bulan_id.values())
-    agg_df["Nama_Bulan"] = pd.Categorical(agg_df["Nama_Bulan"], categories=urutan_bulan, ordered=True)
+    agg_df["Nama_Bulan"] = pd.Categorical(
+        agg_df["Nama_Bulan"],
+        categories=urutan_bulan,
+        ordered=True
+    )
     agg_df = agg_df.sort_values("Nama_Bulan")
 
     # Konversi ke Triliun
     agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
-    # Area chart dengan sumbu Y T (1T, 2T)
     fig = px.area(
         agg_df,
         x="Nama_Bulan",
         y="Value_T",
         markers=True,
-        title="Tren Outstanding per Bulan (KUR Gen 1 + KUR Gen 2, Total Semua Tahun)"
+        title="Total Outstanding Bulanan (Akumulasi Semua Tahun)"
     )
 
-    # Atur format sumbu Y menjadi 1T, 2T
     fig.update_layout(
         xaxis_title="Bulan",
-        yaxis_title="Outstanding (Triliun)",
+        yaxis_title="Outstanding",
         hovermode="x unified",
-        yaxis=dict(tickformat="~s")  # otomatis T, M, B
+        yaxis=dict(
+            tickformat=",.0f",
+            ticksuffix="T"
+        )
+    )
+
+    fig.update_traces(
+        hovertemplate="Bulan: %{x}<br>Outstanding: %{y:.2f}T<extra></extra>"
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-else:
-    st.warning(
-        f"❌ Grafik tren tidak dapat ditampilkan. Kolom kurang: "
-        f"{needed_cols - set(df_f.columns)}"
-    )
 
 # ===============================
 # TABLE
