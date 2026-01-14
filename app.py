@@ -149,7 +149,7 @@ if needed_cols.issubset(df_f.columns):
     agg_df = agg_df.sort_values("Nama_Bulan")
 
     # Konversi ke Triliun
-    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
+    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000
 
     fig = px.area(
         agg_df,
