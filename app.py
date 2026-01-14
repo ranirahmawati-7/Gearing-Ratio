@@ -96,49 +96,6 @@ if "Generasi" in df.columns and gen_filter:
     df_f = df_f[df_f["Generasi"].isin(gen_filter)]
 
 # ===============================
-# KPI (OPTIONAL)
-# ===============================
-st.subheader("📌 KPI")
-
-col1, col2, col3 = st.columns(3)
-
-if "Value" in df_f.columns:
-    col1.metric("Total Outstanding", f"{df_f['Value'].sum():,.0f}")
-else:
-    col1.warning("Kolom `Value` tidak ditemukan")
-
-if "Jumlah Debitur" in df_f.columns:
-    col2.metric("Jumlah Debitur", f"{df_f['Jumlah Debitur'].sum():,.0f}")
-else:
-    col2.warning("Kolom `Jumlah Debitur` tidak ditemukan")
-
-col3.metric("Jumlah Baris Data", len(df_f))
-
-# ===============================
-# BAR CHART – PORTFOLIO SUMMARY
-# ===============================
-st.subheader("📊 Portfolio Summary")
-
-needed_cols = {"Jenis", "Value"}
-
-if needed_cols.issubset(df_f.columns):
-    summary_df = df_f.groupby("Jenis", as_index=False)["Value"].sum()
-
-    fig = px.bar(
-        summary_df,
-        x="Jenis",
-        y="Value",
-        text_auto=".2s",
-        title="Portfolio Summary"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning(
-        f"❌ Grafik tidak dapat ditampilkan. Kolom kurang: "
-        f"{needed_cols - set(df_f.columns)}"
-    )
-
-# ===============================
 # BAR CHART – JUMLAH DEBITUR
 # ===============================
 st.subheader("👥 Jumlah Debitur")
