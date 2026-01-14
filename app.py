@@ -120,21 +120,19 @@ else:
     )
 
 # ===============================
-# LINE / AREA CHART – TREN PER BULAN (TOTAL ALL JENIS)
+# LINE / AREA CHART – TOTAL PER BULAN (SEMUA JENIS & TAHUN)
 # ===============================
-st.subheader("📈 Tren Outstanding per Bulan (Total Semua Jenis)")
+st.subheader("📈 Tren Outstanding per Bulan (Total Semua Tahun & Jenis)")
 
 needed_cols = {"Periode", "Value"}
 
 if needed_cols.issubset(df_f.columns):
 
     df_tren = df_f.copy()
-
-    # Pastikan datetime
     df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
-    df_tren["Tahun"] = df_tren["Periode"].dt.year
+    
+    # Ambil bulan
     df_tren["Bulan"] = df_tren["Periode"].dt.month
-    df_tren["Tanggal"] = df_tren["Periode"].dt.day
 
     # Mapping bulan Indonesia
     bulan_id = {
@@ -144,34 +142,31 @@ if needed_cols.issubset(df_f.columns):
     }
     df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
 
-    # Label bulan + tanggal (misal 31 Januari)
-    df_tren["Bulan_Tanggal"] = df_tren["Tanggal"].astype(str) + " " + df_tren["Nama_Bulan"]
-
-    # Agregasi: TOTAL value per Bulan (semua jenis digabung)
+    # Agregasi: SUM Value per Bulan (semua tahun & jenis)
     agg_df = (
-        df_tren
-        .groupby(["Tahun", "Bulan"], as_index=False)["Value"]
+        df_tren.groupby("Nama_Bulan", as_index=False)["Value"]
         .sum()
-        .sort_values(["Tahun", "Bulan"])
     )
 
-    # Buat label x axis: Bulan-Tahun
-    agg_df["Bulan_Tahun"] = agg_df["Bulan"].map(bulan_id) + " " + agg_df["Tahun"].astype(str)
+    # Pastikan urutan bulan Jan → Des
+    urutan_bulan = list(bulan_id.values())
+    agg_df["Nama_Bulan"] = pd.Categorical(agg_df["Nama_Bulan"], categories=urutan_bulan, ordered=True)
+    agg_df = agg_df.sort_values("Nama_Bulan")
 
-    # Konversi Y ke Triliun
+    # Konversi ke Triliun
     agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
     # Area chart
     fig = px.area(
         agg_df,
-        x="Bulan_Tahun",
+        x="Nama_Bulan",
         y="Value_T",
         markers=True,
-        title="Tren Outstanding per Bulan (Total Semua Jenis)"
+        title="Tren Outstanding per Bulan (Total Semua Tahun & Jenis)"
     )
 
     fig.update_layout(
-        xaxis_title="Bulan - Tahun",
+        xaxis_title="Bulan",
         yaxis_title="Outstanding (Triliun)",
         hovermode="x unified"
     )
