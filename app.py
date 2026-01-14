@@ -55,7 +55,7 @@ for col in required_cols:
 df["Periode_Raw"] = df["Periode"].astype(str)
 
 # ===============================
-# PARSING PERIODE STRING
+# PARSING PERIODE
 # ===============================
 bulan_map = {
     "jan": 1, "feb": 2, "mar": 3, "apr": 4,
@@ -105,13 +105,13 @@ df["Periode_Label"] = (
 )
 
 # ===============================
-# CLEAN VALUE
+# CLEAN VALUE (FORMAT INDONESIA)
 # ===============================
 df["Value"] = (
     df["Value"]
     .astype(str)
-    .str.replace(".", "", regex=False)
-    .str.replace(",", ".", regex=False)
+    .str.replace(".", "", regex=False)   # hapus ribuan
+    .str.replace(",", ".", regex=False)  # koma -> desimal
 )
 
 df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
@@ -123,88 +123,72 @@ st.sidebar.header("🔎 Filter Data")
 
 df_f = df.copy()
 
-if "Jenis" in df.columns:
+if "Jenis" in df_f.columns:
     jenis_filter = st.sidebar.multiselect(
         "Jenis",
-        sorted(df["Jenis"].dropna().unique()),
-        default=sorted(df["Jenis"].dropna().unique())
+        sorted(df_f["Jenis"].dropna().unique()),
+        default=sorted(df_f["Jenis"].dropna().unique())
     )
     df_f = df_f[df_f["Jenis"].isin(jenis_filter)]
 
 # ===============================
-# KHUSUS KUR:
-# GEN 1 + GEN 2 DIGABUNG
+# PREVIEW DATA (MENTAH, TIDAK DIJUMBLAHKAN)
 # ===============================
-if "Jenis" in df_f.columns:
-    kur_mask = df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])
-
-    df_kur = (
-        df_f[kur_mask]
-        .groupby(
-            ["SortKey", "Periode_Label", "Year", "Month"],
-            as_index=False
-        )["Value"]
-        .sum()
-    )
-
-    df_kur["Jenis"] = "KUR (Gen 1 + Gen 2)"
-
-    # data selain KUR
-    df_non_kur = df_f[~kur_mask]
-
-    # gabungkan kembali
-    df_f = pd.concat([df_non_kur, df_kur], ignore_index=True)
-
-# ===============================
-# PREVIEW DATA
-# ===============================
-st.subheader("👀 Preview Data")
+st.subheader("👀 Preview Data (Raw / As Is)")
 st.dataframe(
-    df_f.style.format({"Value": "Rp {:,.0f}"}),
+    df_f.style.format({"Value": "Rp {:,.2f}"}),
     use_container_width=True
 )
 
 # ===============================
-# AREA CHART – OUTSTANDING
+# AREA CHART – KUR GEN 1 + GEN 2 SAJA
 # ===============================
-st.subheader("📈 Outstanding per Bulan")
+st.subheader("📈 Outstanding KUR (Gen 1 + Gen 2)")
 
-agg_df = (
-    df_f
-    .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
-    .sum()
-    .sort_values("SortKey")
-)
+if "Jenis" not in df_f.columns:
+    st.warning("Kolom 'Jenis' tidak tersedia")
+else:
+    df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
 
-agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
+    if df_kur.empty:
+        st.warning("Data KUR Gen 1 & Gen 2 tidak tersedia")
+    else:
+        agg_df = (
+            df_kur
+            .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
+            .sum()
+            .sort_values("SortKey")
+        )
 
-fig = px.area(
-    agg_df,
-    x="Periode_Label",
-    y="Value_T",
-    markers=True
-)
+        agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
-fig.update_layout(
-    xaxis_title="Periode",
-    yaxis_title="Outstanding (Triliun)",
-    yaxis=dict(ticksuffix=" T"),
-    hovermode="x unified"
-)
+        fig = px.area(
+            agg_df,
+            x="Periode_Label",
+            y="Value_T",
+            markers=True
+        )
 
-fig.update_xaxes(
-    type="category",
-    categoryorder="array",
-    categoryarray=agg_df["Periode_Label"].tolist(),
-    tickangle=-45
-)
+        fig.update_layout(
+            xaxis_title="Periode",
+            yaxis_title="Outstanding KUR (Triliun)",
+            yaxis=dict(ticksuffix=" T"),
+            hovermode="x unified"
+        )
 
-st.plotly_chart(fig, use_container_width=True)
+        fig.update_xaxes(
+            type="category",
+            categoryorder="array",
+            categoryarray=agg_df["Periode_Label"].tolist(),
+            tickangle=-45
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
 # TABLE DETAIL
 # ===============================
-st.subheader("📋 Data Detail (Final)")
+st.subheader("📋 Data Detail (Filtered, Tanpa Agregasi)")
 st.dataframe(df_f, use_container_width=True)
 
 # ===============================
