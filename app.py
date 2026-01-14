@@ -85,9 +85,7 @@ if "Generasi" in df.columns:
 # ===============================
 st.subheader("👀 Preview Data (Filtered)")
 st.dataframe(
-    df_f.style.format({
-        "Value": "Rp {:,.0f}"
-    }),
+    df_f.style.format({"Value": "Rp {:,.0f}"}),
     use_container_width=True
 )
 
@@ -103,9 +101,10 @@ if {"Jenis", "Jumlah Debitur"}.issubset(df_f.columns):
         deb_df,
         x="Jenis",
         y="Jumlah Debitur",
-        text_auto=True,
-        title="Jumlah Debitur"
+        text_auto=True
     )
+
+    fig.update_xaxes(type="category")
     st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
@@ -113,27 +112,27 @@ if {"Jenis", "Jumlah Debitur"}.issubset(df_f.columns):
 # ===============================
 st.subheader("📈 Outstanding Bulanan (Akumulasi Semua Tahun)")
 
+bulan_id = {
+    1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+    5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+    9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+}
+
 if {"Periode", "Value", "Jenis"}.issubset(df_f.columns):
 
     df_tren = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])].copy()
 
-    df_tren["Bulan"] = df_tren["Periode"].dt.month
+    df_tren["Month"] = df_tren["Periode"].dt.month
+    df_tren["Nama_Bulan"] = df_tren["Month"].map(bulan_id)
 
-    bulan_id = {
-        1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
-        5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
-        9: "September", 10: "Oktober", 11: "November", 12: "Desember"
-    }
-
-    df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
-
-    agg_df = df_tren.groupby("Nama_Bulan", as_index=False)["Value"].sum()
-    agg_df["Nama_Bulan"] = pd.Categorical(
-        agg_df["Nama_Bulan"],
-        categories=list(bulan_id.values()),
-        ordered=True
+    agg_df = (
+        df_tren
+        .groupby("Month", as_index=False)["Value"]
+        .sum()
+        .sort_values("Month")
     )
-    agg_df = agg_df.sort_values("Nama_Bulan")
+
+    agg_df["Nama_Bulan"] = agg_df["Month"].map(bulan_id)
     agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
 
     fig = px.area(
@@ -150,6 +149,15 @@ if {"Periode", "Value", "Jenis"}.issubset(df_f.columns):
         hovermode="x unified"
     )
 
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=agg_df["Nama_Bulan"].tolist(),
+        tickmode="array",
+        tickvals=agg_df["Nama_Bulan"].tolist(),
+        ticktext=agg_df["Nama_Bulan"].tolist()
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
@@ -161,19 +169,19 @@ if {"Periode", "Value", "Jenis"}.issubset(df_f.columns):
 
     df_tren = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])].copy()
 
-    df_tren["Tahun"] = df_tren["Periode"].dt.year
-    df_tren["Bulan"] = df_tren["Periode"].dt.month
-    df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
+    df_tren["Year"] = df_tren["Periode"].dt.year
+    df_tren["Month"] = df_tren["Periode"].dt.month
+    df_tren["SortKey"] = df_tren["Year"] * 100 + df_tren["Month"]
 
     df_tren["Bulan_Tahun"] = (
-        df_tren["Nama_Bulan"] + " " + df_tren["Tahun"].astype(str)
+        df_tren["Month"].map(bulan_id) + " " + df_tren["Year"].astype(str)
     )
 
     agg_df = (
         df_tren
-        .groupby(["Tahun", "Bulan", "Bulan_Tahun"], as_index=False)["Value"]
+        .groupby(["SortKey", "Bulan_Tahun"], as_index=False)["Value"]
         .sum()
-        .sort_values(["Tahun", "Bulan"])
+        .sort_values("SortKey")
     )
 
     agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
@@ -190,6 +198,16 @@ if {"Periode", "Value", "Jenis"}.issubset(df_f.columns):
         yaxis_title="Outstanding (T)",
         yaxis=dict(ticksuffix="T"),
         hovermode="x unified"
+    )
+
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=agg_df["Bulan_Tahun"].tolist(),
+        tickmode="array",
+        tickvals=agg_df["Bulan_Tahun"].tolist(),
+        ticktext=agg_df["Bulan_Tahun"].tolist(),
+        tickangle=-45
     )
 
     st.plotly_chart(fig, use_container_width=True)
