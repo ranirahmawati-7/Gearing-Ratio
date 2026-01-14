@@ -4,200 +4,109 @@ import plotly.express as px
 import re
 
 # ===============================
-# CONFIG
+# COPY DATA
 # ===============================
-st.set_page_config(
-    page_title="Dashboard KUR & PEN",
-    layout="wide"
+df_f = df.copy()
+
+# ===============================
+# NORMALISASI NILAI (FORMAT INDONESIA)
+# ===============================
+df_f["Value"] = (
+    df_f["Value"]
+    .astype(str)
+    .str.replace(".", "", regex=False)
+    .str.replace(",", ".", regex=False)
+    .astype(float)
 )
 
-st.title("📊 Summary Outstanding Penjaminan KUR & PEN")
-
 # ===============================
-# UPLOAD FILE
-# ===============================
-uploaded_file = st.file_uploader(
-    "📥 Upload file Excel / CSV",
-    type=["csv", "xlsx"]
-)
-
-if uploaded_file is None:
-    st.info("Silakan upload file terlebih dahulu")
-    st.stop()
-
-# ===============================
-# LOAD DATA
-# ===============================
-@st.cache_data
-def load_data(file):
-    if file.name.endswith(".csv"):
-        return pd.read_csv(file)
-    return pd.read_excel(file)
-
-df = load_data(uploaded_file)
-
-# ===============================
-# VALIDASI KOLOM
-# ===============================
-required_cols = ["Periode", "Value"]
-for col in required_cols:
-    if col not in df.columns:
-        st.error(f"❌ Kolom '{col}' tidak ditemukan")
-        st.stop()
-
-# ===============================
-# SIMPAN PERIODE ASLI
-# ===============================
-df["Periode_Raw"] = df["Periode"].astype(str)
-
-# ===============================
-# PARSING PERIODE (DATE & STRING)
+# DETEKSI PERIODE (BULAN & TAHUN)
 # ===============================
 bulan_map = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
-    "may": 5, "mei": 5, "jun": 6, "jul": 7,
-    "aug": 8, "agu": 8, "sep": 9,
-    "oct": 10, "okt": 10,
-    "nov": 11, "dec": 12
+    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+    "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+    "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
 }
 
-def parse_periode(val):
-    try:
-        dt = pd.to_datetime(val)
-        return dt.year, dt.month
-    except:
-        pass
+def parse_periode(row):
+    txt = str(row["Periode"])
 
-    text = str(val).lower()
-    for b, m in bulan_map.items():
-        if b in text:
-            y = re.search(r"(20\d{2}|\d{2})", text)
-            if y:
-                year = int(y.group())
-                if year < 100:
-                    year += 2000
-                return year, m
-    return None, None
+    audited = "audited" in txt.lower()
 
-df[["Year", "Month"]] = df["Periode_Raw"].apply(
-    lambda x: pd.Series(parse_periode(x))
-)
-
-df = df.dropna(subset=["Year", "Month"])
-
-df["SortKey"] = df["Year"] * 100 + df["Month"]
-
-# ===============================
-# LABEL BULAN
-# ===============================
-bulan_id = {
-    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
-    5: "Mei", 6: "Jun", 7: "Jul", 8: "Agu",
-    9: "Sep", 10: "Okt", 11: "Nov", 12: "Des"
-}
-
-df["Periode_Label"] = (
-    df["Month"].map(bulan_id) + " " + df["Year"].astype(int).astype(str)
-)
-
-# ===============================
-# FLAG AUDITED
-# ===============================
-df["Is_Audited"] = df["Periode_Raw"].str.contains(
-    "audit", case=False, na=False
-)
-
-# ===============================
-# CLEAN VALUE (FORMAT INDONESIA AMAN)
-# ===============================
-def parse_value(val):
-    if pd.isna(val):
-        return None
-    if isinstance(val, (int, float)):
-        return float(val)
-
-    text = str(val).strip()
-
-    if "." in text and "," in text:
-        text = text.replace(".", "").replace(",", ".")
-    elif "." in text and "," not in text:
-        text = text.replace(".", "")
-
-    try:
-        return float(text)
-    except:
+    m = re.search(r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*(\d{2,4})", txt)
+    if not m:
         return None
 
-df["Value"] = df["Value"].apply(parse_value)
+    bulan = bulan_map[m.group(1)]
+    tahun = int(m.group(2))
+    if tahun < 100:
+        tahun += 2000
+
+    sortkey = tahun * 100 + bulan
+
+    label = f"{m.group(1)} {str(tahun)[-2:]}"
+    if audited:
+        label += " Audited"
+
+    return pd.Series([bulan, tahun, sortkey, audited, label])
+
+df_f[["Bulan", "Tahun", "SortKey", "IsAudited", "Periode_Label"]] = (
+    df_f.apply(parse_periode, axis=1)
+)
+
+df_f = df_f.dropna(subset=["SortKey"])
 
 # ===============================
-# SIDEBAR FILTER (TAHUN & BULAN)
+# 🔥 LOGIKA PENGGANTIAN AUDITED
+# ===============================
+audited_keys = df_f.loc[df_f["IsAudited"], "SortKey"].unique()
+
+df_f = df_f[
+    (df_f["IsAudited"]) |
+    (~df_f["SortKey"].isin(audited_keys))
+]
+
+# ===============================
+# FILTER SIDEBAR (PERIODE & TAHUN)
 # ===============================
 st.sidebar.header("🔎 Filter Data")
 
-df_f = df.copy()
-
-available_years = sorted(df_f["Year"].unique())
-selected_years = st.sidebar.multiselect(
+tahun_filter = st.sidebar.multiselect(
     "Tahun",
-    available_years,
-    default=available_years
+    sorted(df_f["Tahun"].unique()),
+    default=sorted(df_f["Tahun"].unique())
 )
-df_f = df_f[df_f["Year"].isin(selected_years)]
 
-df_f["Bulan_Nama"] = df_f["Month"].map(bulan_id)
-selected_months = st.sidebar.multiselect(
+bulan_filter = st.sidebar.multiselect(
     "Bulan",
-    list(bulan_id.values()),
-    default=list(bulan_id.values())
-)
-df_f = df_f[df_f["Bulan_Nama"].isin(selected_months)]
-
-# ===============================
-# PREVIEW DATA (MENTAH)
-# ===============================
-st.subheader("👀 Preview Data (Raw / As Is)")
-st.dataframe(
-    df_f.style.format({"Value": "Rp {:,.2f}"}),
-    use_container_width=True
+    sorted(df_f["Bulan"].unique()),
+    default=sorted(df_f["Bulan"].unique())
 )
 
-# ===============================
-# AGREGASI OS KUR (AUDITED PRIORITY - FINAL)
-# ===============================
-st.subheader("📈 OS Penjaminan KUR")
-
-df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
-
-hasil = []
-
-for sortkey, g in df_kur.groupby("SortKey"):
-    audited = g[g["Is_Audited"]]
-
-    if not audited.empty:
-        row = audited.iloc[-1]
-        hasil.append({
-            "SortKey": sortkey,
-            "Periode_Label": row["Periode_Label"] + " (Audited)",
-            "OS_KUR_Rp": row["Value"]
-        })
-    else:
-        hasil.append({
-            "SortKey": sortkey,
-            "Periode_Label": g.iloc[0]["Periode_Label"],
-            "OS_KUR_Rp": g["Value"].sum()
-        })
-
-df_kur_agg = pd.DataFrame(hasil).sort_values("SortKey")
-df_kur_agg["OS_KUR_T"] = df_kur_agg["OS_KUR_Rp"] / 1_000_000_000_000
+df_f = df_f[
+    (df_f["Tahun"].isin(tahun_filter)) &
+    (df_f["Bulan"].isin(bulan_filter))
+]
 
 # ===============================
-# GRAFIK
+# AGREGASI (KUR GEN 1 + GEN 2)
+# ===============================
+agg_df = (
+    df_f
+    .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
+    .sum()
+    .sort_values("SortKey")
+)
+
+agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
+
+# ===============================
+# AREA CHART
 # ===============================
 fig = px.area(
-    df_kur_agg,
+    agg_df,
     x="Periode_Label",
-    y="OS_KUR_T",
+    y="Value_T",
     markers=True
 )
 
@@ -209,33 +118,9 @@ fig.update_layout(
 )
 
 fig.update_xaxes(
-    type="category",
     categoryorder="array",
-    categoryarray=df_kur_agg["Periode_Label"].tolist(),
+    categoryarray=agg_df["Periode_Label"].tolist(),
     tickangle=-45
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-# ===============================
-# TABEL HASIL OLAHAN
-# ===============================
-st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR")
-
-st.dataframe(
-    df_kur_agg.style.format({
-        "OS_KUR_Rp": "Rp {:,.2f}",
-        "OS_KUR_T": "{:.2f}"
-    }),
-    use_container_width=True
-)
-
-# ===============================
-# DOWNLOAD
-# ===============================
-st.download_button(
-    "⬇️ Download Hasil OS KUR",
-    df_kur_agg.to_csv(index=False).encode("utf-8"),
-    "os_penjaminan_kur.csv",
-    "text/csv"
-)
