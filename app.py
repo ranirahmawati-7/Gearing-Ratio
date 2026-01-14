@@ -176,6 +176,78 @@ if needed_cols.issubset(df_f.columns):
     st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
+# AREA CHART – TOTAL BULANAN PER TAHUN (KUR GEN 1 + GEN 2)
+# ===============================
+st.subheader("📈 Tren Outstanding Bulanan per Tahun (KUR Gen 1 + KUR Gen 2)")
+
+needed_cols = {"Periode", "Value", "Jenis"}
+
+if needed_cols.issubset(df_f.columns):
+
+    df_tren = df_f.copy()
+
+    # Filter hanya KUR Gen 1 & Gen 2
+    df_tren = df_tren[df_tren["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
+
+    # Pastikan datetime
+    df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
+
+    # Ambil tahun & bulan
+    df_tren["Tahun"] = df_tren["Periode"].dt.year
+    df_tren["Bulan"] = df_tren["Periode"].dt.month
+
+    # Nama bulan Indonesia
+    bulan_id = {
+        1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+        5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+        9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+    }
+
+    df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
+
+    # Label Bulan Tahun (contoh: Februari 2025)
+    df_tren["Bulan_Tahun"] = (
+        df_tren["Nama_Bulan"] + " " + df_tren["Tahun"].astype(str)
+    )
+
+    # Agregasi per Bulan-Tahun
+    agg_df = (
+        df_tren
+        .groupby(["Tahun", "Bulan", "Bulan_Tahun"], as_index=False)["Value"]
+        .sum()
+        .sort_values(["Tahun", "Bulan"])
+    )
+
+    # Konversi ke Triliun
+    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
+
+    # Area chart
+    fig = px.area(
+        agg_df,
+        x="Bulan_Tahun",
+        y="Value_T",
+        markers=True,
+        title="Total Outstanding Bulanan per Tahun (KUR Gen 1 + KUR Gen 2)"
+    )
+
+    fig.update_layout(
+        xaxis_title="Periode",
+        yaxis_title="Outstanding",
+        hovermode="x unified",
+        yaxis=dict(
+            tickformat=",.0f",
+            ticksuffix="T"
+        )
+    )
+
+    fig.update_traces(
+        hovertemplate="Periode: %{x}<br>Outstanding: %{y:.2f}T<extra></extra>"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+# ===============================
 # AREA CHART – TOTAL BULANAN (EKUITAS kur)
 # ===============================
 st.subheader("📈 Tren Outstanding per Bulan EKUITAS KUR")
