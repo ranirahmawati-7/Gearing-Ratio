@@ -98,7 +98,7 @@ if "Generasi" in df.columns and gen_filter:
 # ===============================
 # LINE / AREA CHART – TOTAL PER BULAN (KUR Gen 1 + KUR Gen 2, SEMUA TAHUN)
 # ===============================
-st.subheader("📈 Tren Outstanding per Bulan (KUR Gen 1 + KUR Gen 2)")
+st.subheader("📈 Tren OS Penjamin KUR")
 
 needed_cols = {"Periode", "Value", "Jenis"}
 
@@ -134,7 +134,7 @@ if needed_cols.issubset(df_f.columns):
     # Konversi ke Triliun
     agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
-    # Area chart
+    # Area chart dengan sumbu Y T (1T, 2T)
     fig = px.area(
         agg_df,
         x="Nama_Bulan",
@@ -143,10 +143,12 @@ if needed_cols.issubset(df_f.columns):
         title="Tren Outstanding per Bulan (KUR Gen 1 + KUR Gen 2, Total Semua Tahun)"
     )
 
+    # Atur format sumbu Y menjadi 1T, 2T
     fig.update_layout(
         xaxis_title="Bulan",
         yaxis_title="Outstanding (Triliun)",
-        hovermode="x unified"
+        hovermode="x unified",
+        yaxis=dict(tickformat="~s")  # otomatis T, M, B
     )
 
     st.plotly_chart(fig, use_container_width=True)
