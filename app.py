@@ -96,58 +96,64 @@ if "Generasi" in df.columns and gen_filter:
     df_f = df_f[df_f["Generasi"].isin(gen_filter)]
 
 # ===============================
-# LINE / AREA CHART – TOTAL PER BULAN (SEMUA JENIS & TAHUN)
+# LINE / AREA CHART – TOTAL PER BULAN (KUR Gen 1 + Gen 2)
 # ===============================
-st.subheader("📈 Tren Total OS Penjamin KUR")
+st.subheader("📈 Tren Outstanding per Bulan (KUR Gen 1 & Gen 2, Total Semua Tahun)")
 
-needed_cols = {"Periode", "Value"}
+needed_cols = {"Periode", "Value", "Jenis", "Generasi"}
 
 if needed_cols.issubset(df_f.columns):
 
     df_tren = df_f.copy()
     df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
-    
-    # Ambil bulan
-    df_tren["Bulan"] = df_tren["Periode"].dt.month
 
-    # Mapping bulan Indonesia
-    bulan_id = {
-        1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
-        5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
-        9: "September", 10: "Oktober", 11: "November", 12: "Desember"
-    }
-    df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
+    # Filter khusus: KUR Gen 1 + Gen 2
+    df_tren = df_tren[(df_tren["Jenis"] == "KUR") & (df_tren["Generasi"].isin(["Gen 1", "Gen 2"]))]
 
-    # Agregasi: SUM Value per Bulan (semua tahun & jenis)
-    agg_df = (
-        df_tren.groupby("Nama_Bulan", as_index=False)["Value"]
-        .sum()
-    )
+    if df_tren.empty:
+        st.warning("❌ Tidak ada data untuk Jenis KUR Gen 1 & Gen 2")
+    else:
+        # Ambil bulan
+        df_tren["Bulan"] = df_tren["Periode"].dt.month
 
-    # Pastikan urutan bulan Jan → Des
-    urutan_bulan = list(bulan_id.values())
-    agg_df["Nama_Bulan"] = pd.Categorical(agg_df["Nama_Bulan"], categories=urutan_bulan, ordered=True)
-    agg_df = agg_df.sort_values("Nama_Bulan")
+        # Mapping bulan Indonesia
+        bulan_id = {
+            1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+            5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+            9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+        }
+        df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
 
-    # Konversi ke Triliun
-    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
+        # Agregasi SUM Value per Bulan (total semua tahun)
+        agg_df = (
+            df_tren.groupby("Nama_Bulan", as_index=False)["Value"]
+            .sum()
+        )
 
-    # Area chart
-    fig = px.area(
-        agg_df,
-        x="Nama_Bulan",
-        y="Value_T",
-        markers=True,
-        title="Tren Outstanding per Bulan (Total Semua Tahun & Jenis)"
-    )
+        # Urutkan bulan Jan → Des
+        urutan_bulan = list(bulan_id.values())
+        agg_df["Nama_Bulan"] = pd.Categorical(agg_df["Nama_Bulan"], categories=urutan_bulan, ordered=True)
+        agg_df = agg_df.sort_values("Nama_Bulan")
 
-    fig.update_layout(
-        xaxis_title="Bulan",
-        yaxis_title="Outstanding (Triliun)",
-        hovermode="x unified"
-    )
+        # Konversi ke Triliun
+        agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
-    st.plotly_chart(fig, use_container_width=True)
+        # Area chart
+        fig = px.area(
+            agg_df,
+            x="Nama_Bulan",
+            y="Value_T",
+            markers=True,
+            title="Tren Outstanding per Bulan (KUR Gen 1 & Gen 2, Total Semua Tahun)"
+        )
+
+        fig.update_layout(
+            xaxis_title="Bulan",
+            yaxis_title="Outstanding (Triliun)",
+            hovermode="x unified"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.warning(
