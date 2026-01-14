@@ -338,7 +338,7 @@ df_kur_sorted = df_kur.sort_values(
 df_kur_agg = (
     df_kur_sorted
     .groupby(["SortKey", "Periode_Label"], as_index=False)
-    .agg(OS_KUR&PEN_Rp=("Value", "last"))
+    .agg(OS_KUR&PEN_Rp =("Value", "last"))
     .sort_values("SortKey")
 )
 
