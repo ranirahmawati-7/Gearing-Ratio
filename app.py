@@ -39,7 +39,8 @@ df = load_data(uploaded_file)
 # ===============================
 # VALIDASI KOLOM
 # ===============================
-for col in ["Periode", "Value"]:
+required_cols = ["Periode", "Value"]
+for col in required_cols:
     if col not in df.columns:
         st.error(f"❌ Kolom '{col}' tidak ditemukan")
         st.stop()
@@ -50,7 +51,7 @@ for col in ["Periode", "Value"]:
 df["Periode_Raw"] = df["Periode"].astype(str)
 
 # ===============================
-# PARSING PERIODE STRING
+# PARSING PERIODE
 # ===============================
 bulan_map = {
     "jan": 1, "feb": 2, "mar": 3, "apr": 4,
@@ -70,10 +71,12 @@ def parse_periode(val):
     text = str(val).lower()
     for b, m in bulan_map.items():
         if b in text:
-            y = int(re.search(r"(20\d{2}|\d{2})", text).group())
-            if y < 100:
-                y += 2000
-            return y, m
+            year_match = re.search(r"(20\d{2}|\d{2})", text)
+            if year_match:
+                y = int(year_match.group())
+                if y < 100:
+                    y += 2000
+                return y, m
     return None, None
 
 df[["Year", "Month"]] = df["Periode_Raw"].apply(
@@ -84,7 +87,7 @@ df = df.dropna(subset=["Year", "Month"])
 df["SortKey"] = df["Year"] * 100 + df["Month"]
 
 # ===============================
-# LABEL PERIODE
+# LABEL BULAN
 # ===============================
 bulan_id = {
     1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
@@ -97,7 +100,7 @@ df["Periode_Label"] = (
 )
 
 # ===============================
-# CLEAN VALUE (ANTI SALAH FORMAT)
+# CLEAN VALUE (AMAN)
 # ===============================
 def parse_value(val):
     if pd.isna(val):
@@ -108,65 +111,60 @@ def parse_value(val):
     text = str(val).strip()
     if "," in text and "." in text:
         text = text.replace(".", "").replace(",", ".")
-    elif "." in text:
+    elif "," not in text and "." in text:
         text = text.replace(".", "")
 
-    return float(text)
+    try:
+        return float(text)
+    except:
+        return None
 
 df["Value"] = df["Value"].apply(parse_value)
 
 # ===============================
-# SIDEBAR FILTER (UMUM)
+# SIDEBAR (TIDAK UNTUK KUR GEN)
 # ===============================
 st.sidebar.header("🔎 Filter Data")
-
 df_f = df.copy()
-
-if "Jenis" in df_f.columns:
-    jenis_filter = st.sidebar.multiselect(
-        "Jenis",
-        sorted(df_f["Jenis"].dropna().unique()),
-        default=sorted(df_f["Jenis"].dropna().unique())
-    )
-    df_f = df_f[df_f["Jenis"].isin(jenis_filter)]
 
 # ===============================
 # PREVIEW DATA (MENTAH)
 # ===============================
-st.subheader("👀 Preview Data (Raw)")
+st.subheader("👀 Preview Data (Raw / As Is)")
 st.dataframe(
     df_f.style.format({"Value": "Rp {:,.2f}"}),
     use_container_width=True
 )
 
 # ===============================
-# AREA CHART – OS PENJAMINAN KUR
+# AGREGASI KHUSUS KUR
 # ===============================
 st.subheader("📈 OS Penjaminan KUR")
 
-df_kur = df[
-    df["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])
-]
+df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
 
-agg_chart = (
+df_kur_agg = (
     df_kur
-    .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
-    .sum()
+    .groupby(["SortKey", "Periode_Label"], as_index=False)
+    .agg(OS_KUR_Rp=("Value", "sum"))
     .sort_values("SortKey")
 )
 
-agg_chart["Value_T"] = agg_chart["Value"] / 1_000_000_000_000
+df_kur_agg["OS_KUR_T"] = df_kur_agg["OS_KUR_Rp"] / 1_000_000_000_000
 
+# ===============================
+# GRAFIK
+# ===============================
 fig = px.area(
-    agg_chart,
+    df_kur_agg,
     x="Periode_Label",
-    y="Value_T",
+    y="OS_KUR_T",
     markers=True
 )
 
 fig.update_layout(
     xaxis_title="Periode",
-    yaxis_title="Outstanding (Triliun)",
+    yaxis_title="Outstanding KUR (Triliun)",
     yaxis=dict(ticksuffix=" T"),
     hovermode="x unified"
 )
@@ -174,36 +172,22 @@ fig.update_layout(
 fig.update_xaxes(
     type="category",
     categoryorder="array",
-    categoryarray=agg_chart["Periode_Label"],
+    categoryarray=df_kur_agg["Periode_Label"].tolist(),
     tickangle=-45
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
-# TABLE HASIL OLAHAN (KUR ONLY)
+# TABEL HASIL OLAHAN
 # ===============================
-st.subheader("📋 Tabel Hasil Olahan – OS Penjaminan KUR")
-
-pivot = (
-    df_kur
-    .pivot_table(
-        index=["SortKey", "Periode_Label"],
-        columns="Jenis",
-        values="Value",
-        aggfunc="sum"
-    )
-    .reset_index()
-    .sort_values("SortKey")
-)
-
-pivot["Total OS KUR"] = (
-    pivot.get("KUR Gen 1", 0).fillna(0) +
-    pivot.get("KUR Gen 2", 0).fillna(0)
-)
+st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR")
 
 st.dataframe(
-    pivot.style.format("Rp {:,.2f}"),
+    df_kur_agg.style.format({
+        "OS_KUR_Rp": "Rp {:,.2f}",
+        "OS_KUR_T": "{:.2f}"
+    }),
     use_container_width=True
 )
 
@@ -211,8 +195,8 @@ st.dataframe(
 # DOWNLOAD
 # ===============================
 st.download_button(
-    "⬇️ Download Tabel OS KUR",
-    pivot.to_csv(index=False).encode("utf-8"),
+    "⬇️ Download Hasil OS KUR",
+    df_kur_agg.to_csv(index=False).encode("utf-8"),
     "os_penjaminan_kur.csv",
     "text/csv"
 )
