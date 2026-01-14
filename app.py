@@ -1,202 +1,112 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import re
 
-# ===============================
-# CONFIG
-# ===============================
-st.set_page_config(
-    page_title="Dashboard KUR & PEN",
-    layout="wide"
-)
-
-st.title("📊 Summary Outstanding Penjaminan KUR & PEN")
-
-# ===============================
-# UPLOAD FILE
-# ===============================
-uploaded_file = st.file_uploader(
-    "📥 Upload file Excel / CSV",
-    type=["csv", "xlsx"]
-)
-
-if uploaded_file is None:
-    st.info("Silakan upload file terlebih dahulu")
-    st.stop()
+st.set_page_config(layout="wide")
 
 # ===============================
 # LOAD DATA
 # ===============================
-@st.cache_data
-def load_data(file):
-    if file.name.endswith(".csv"):
-        return pd.read_csv(file)
-    return pd.read_excel(file)
+st.title("📊 Outstanding KUR (Gen 1 + Gen 2)")
 
-try:
-    df = load_data(uploaded_file)
-except Exception as e:
-    st.error(f"❌ Gagal membaca file: {e}")
+uploaded_file = st.file_uploader(
+    "Upload file Excel",
+    type=["xlsx"]
+)
+
+if uploaded_file is None:
     st.stop()
+
+df = pd.read_excel(uploaded_file)
 
 # ===============================
 # VALIDASI KOLOM
 # ===============================
-required_cols = ["Periode", "Value"]
-for col in required_cols:
-    if col not in df.columns:
-        st.error(f"❌ Kolom '{col}' tidak ditemukan")
-        st.stop()
+required_cols = {"Periode", "Jenis", "Value"}
+if not required_cols.issubset(df.columns):
+    st.error(f"Kolom wajib: {required_cols}")
+    st.stop()
 
 # ===============================
-# SIMPAN PERIODE ASLI
-# ===============================
-df["Periode_Raw"] = df["Periode"].astype(str)
-
-# ===============================
-# PARSING PERIODE STRING (Dec 23 Audited, Jan 2024, dll)
-# ===============================
-bulan_map = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
-    "may": 5, "mei": 5, "jun": 6, "jul": 7,
-    "aug": 8, "agu": 8, "sep": 9,
-    "oct": 10, "okt": 10,
-    "nov": 11, "dec": 12
-}
-
-def parse_periode(val):
-    # coba datetime normal dulu
-    try:
-        dt = pd.to_datetime(val)
-        return dt.year, dt.month
-    except:
-        pass
-
-    # cari bulan + tahun di string
-    text = str(val).lower()
-    for b, m in bulan_map.items():
-        if b in text:
-            year_match = re.search(r"(20\d{2}|\d{2})", text)
-            if year_match:
-                y = int(year_match.group())
-                if y < 100:
-                    y += 2000
-                return y, m
-    return None, None
-
-df[["Year", "Month"]] = df["Periode_Raw"].apply(
-    lambda x: pd.Series(parse_periode(x))
-)
-
-df = df.dropna(subset=["Year", "Month"])
-
-df["SortKey"] = df["Year"] * 100 + df["Month"]
-
-# ===============================
-# FORMAT LABEL X AXIS (BULAN TAHUN)
-# ===============================
-bulan_id = {
-    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
-    5: "Mei", 6: "Jun", 7: "Jul", 8: "Agu",
-    9: "Sep", 10: "Okt", 11: "Nov", 12: "Des"
-}
-
-df["Periode_Label"] = (
-    df["Month"].map(bulan_id) + " " + df["Year"].astype(int).astype(str)
-)
-
-# ===============================
-# CLEAN VALUE (HANDLE DESIMAL KOMA)
+# CLEAN VALUE (FORMAT INDONESIA)
 # ===============================
 df["Value"] = (
     df["Value"]
     .astype(str)
     .str.replace(".", "", regex=False)   # hapus pemisah ribuan
-    .str.replace(",", ".", regex=False)  # ubah desimal koma → titik
+    .str.replace(",", ".", regex=False)  # ubah desimal ke format python
 )
 
 df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
 
 # ===============================
-# SIDEBAR FILTER
+# FILTER: HANYA KUR GEN 1 & GEN 2
 # ===============================
-st.sidebar.header("🔎 Filter Data")
-
-df_f = df.copy()
-
-if "Jenis" in df.columns:
-    jenis_filter = st.sidebar.multiselect(
-        "Jenis",
-        sorted(df["Jenis"].dropna().unique()),
-        default=sorted(df["Jenis"].dropna().unique())
-    )
-    df_f = df_f[df_f["Jenis"].isin(jenis_filter)]
+df_f = df[df["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])].copy()
 
 # ===============================
-# PREVIEW DATA
+# OLAH PERIODE (BULAN + TAHUN)
 # ===============================
-st.subheader("👀 Preview Data")
-st.dataframe(
-    df_f.style.format({"Value": "Rp {:,.0f}"}),
-    use_container_width=True
+df_f["Periode_Raw"] = pd.to_datetime(
+    df_f["Periode"],
+    errors="coerce"
+)
+
+df_f["Periode_Label"] = df_f["Periode_Raw"].dt.strftime("%b %Y")
+df_f["SortKey"] = df_f["Periode_Raw"].dt.to_period("M").astype(str)
+
+# ===============================
+# AGREGASI
+# (GEN 1 + GEN 2 PADA PERIODE YANG SAMA)
+# ===============================
+agg_df = (
+    df_f
+    .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
+    .sum()
+    .sort_values("SortKey")
 )
 
 # ===============================
-# AREA CHART – OUTSTANDING (KUR GEN 1 + GEN 2)
+# KONVERSI KE TRILIUN
 # ===============================
-st.subheader("📈 Outstanding KUR (Gen 1 + Gen 2)")
-
-# FILTER KHUSUS KUR GEN 1 & GEN 2
-df_kur = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])].copy()
-
-if df_kur.empty:
-    st.warning("Data KUR Gen 1 & Gen 2 tidak tersedia")
-else:
-    agg_df = (
-        df_kur
-        .groupby(["SortKey", "Periode_Label"], as_index=False)["Value"]
-        .sum()
-        .sort_values("SortKey")
-    )
-
-    agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000_000
-
-    fig = px.area(
-        agg_df,
-        x="Periode_Label",
-        y="Value_T",
-        markers=True
-    )
-
-    fig.update_layout(
-        xaxis_title="Periode",
-        yaxis_title="Outstanding KUR (T)",
-        yaxis=dict(ticksuffix=" T"),
-        hovermode="x unified"
-    )
-
-    fig.update_xaxes(
-        type="category",
-        categoryorder="array",
-        categoryarray=agg_df["Periode_Label"].tolist(),
-        tickangle=-45
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+agg_df["Value_T"] = agg_df["Value"] / 1_000_000_000_000
 
 # ===============================
-# TABLE DETAIL
+# AREA CHART
 # ===============================
-st.subheader("📋 Data Detail (Final)")
-st.dataframe(df_f, use_container_width=True)
+st.subheader("📈 Outstanding KUR (Gen 1 + Gen 2) per Bulan")
 
-# ===============================
-# DOWNLOAD
-# ===============================
-st.download_button(
-    "⬇️ Download Data Filtered",
-    df_f.to_csv(index=False).encode("utf-8"),
-    "data_filtered.csv",
-    "text/csv"
+fig = px.area(
+    agg_df,
+    x="Periode_Label",
+    y="Value_T",
+    markers=True
 )
+
+fig.update_layout(
+    xaxis_title="Periode",
+    yaxis_title="Outstanding (Triliun Rupiah)",
+    yaxis=dict(ticksuffix=" T"),
+    hovermode="x unified"
+)
+
+fig.update_xaxes(
+    type="category",
+    categoryorder="array",
+    categoryarray=agg_df["Periode_Label"].tolist(),
+    tickangle=-45
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ===============================
+# TABEL CEK (OPSIONAL)
+# ===============================
+with st.expander("🔍 Lihat Data Hasil Penjumlahan"):
+    st.dataframe(
+        agg_df.assign(
+            Outstanding_Rp=lambda x: x["Value"].map(
+                lambda v: f"Rp {v:,.0f}".replace(",", ".")
+            )
+        )[["Periode_Label", "Outstanding_Rp"]]
+    )
