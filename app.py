@@ -107,14 +107,15 @@ df["Periode_Label"] = (
 )
 
 # ===============================
-# CLEAN VALUE
+# CLEAN VALUE (HANDLE DESIMAL KOMA)
 # ===============================
 df["Value"] = (
     df["Value"]
     .astype(str)
-    .str.replace(",", "", regex=False)
-    .str.replace(".", "", regex=False)
+    .str.replace(".", "", regex=False)   # hapus pemisah ribuan
+    .str.replace(",", ".", regex=False)  # ubah desimal koma → titik
 )
+
 df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
 
 # ===============================
