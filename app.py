@@ -96,33 +96,9 @@ if "Generasi" in df.columns and gen_filter:
     df_f = df_f[df_f["Generasi"].isin(gen_filter)]
 
 # ===============================
-# BAR CHART – JUMLAH DEBITUR
-# ===============================
-st.subheader("👥 Jumlah Debitur")
-
-needed_cols = {"Jenis", "Jumlah Debitur"}
-
-if needed_cols.issubset(df_f.columns):
-    deb_df = df_f.groupby("Jenis", as_index=False)["Jumlah Debitur"].sum()
-
-    fig = px.bar(
-        deb_df,
-        x="Jenis",
-        y="Jumlah Debitur",
-        text_auto=True,
-        title="Jumlah Debitur"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning(
-        f"❌ Grafik tidak dapat ditampilkan. Kolom kurang: "
-        f"{needed_cols - set(df_f.columns)}"
-    )
-
-# ===============================
 # LINE / AREA CHART – TOTAL PER BULAN (SEMUA JENIS & TAHUN)
 # ===============================
-st.subheader("📈 Tren Outstanding per Bulan (Total Semua Tahun & Jenis)")
+st.subheader("📈 Tren Total OS Penjamin KUR")
 
 needed_cols = {"Periode", "Value"}
 
