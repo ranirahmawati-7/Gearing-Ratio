@@ -125,7 +125,41 @@ df["Value"] = df["Value"].apply(parse_value)
 # SIDEBAR (TIDAK UNTUK KUR GEN)
 # ===============================
 st.sidebar.header("🔎 Filter Data")
+
 df_f = df.copy()
+
+# ===============================
+# FILTER TAHUN
+# ===============================
+available_years = sorted(df_f["Year"].dropna().unique().astype(int))
+selected_years = st.sidebar.multiselect(
+    "Tahun",
+    available_years,
+    default=available_years
+)
+
+df_f = df_f[df_f["Year"].isin(selected_years)]
+
+# ===============================
+# FILTER BULAN
+# ===============================
+bulan_nama = {
+    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
+    5: "Mei", 6: "Jun", 7: "Jul", 8: "Agu",
+    9: "Sep", 10: "Okt", 11: "Nov", 12: "Des"
+}
+
+df_f["Bulan_Nama"] = df_f["Month"].map(bulan_nama)
+
+available_months = list(bulan_nama.values())
+
+selected_months = st.sidebar.multiselect(
+    "Bulan",
+    available_months,
+    default=available_months
+)
+
+df_f = df_f[df_f["Bulan_Nama"].isin(selected_months)]
 
 # ===============================
 # PREVIEW DATA (MENTAH)
