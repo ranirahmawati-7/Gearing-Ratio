@@ -86,7 +86,7 @@ if "Generasi" in df.columns:
 else:
     gen_filter = []
 
-# FILTER DATA (AMAN)
+# FILTER DATA
 df_f = df.copy()
 
 if "Jenis" in df.columns and jenis_filter:
@@ -120,7 +120,7 @@ else:
     )
 
 # ===============================
-# LINE / AREA CHART – TREN PER BULAN (AGREGAT TAHUNAN)
+# LINE / AREA CHART – TREN PER BULAN
 # ===============================
 st.subheader("📈 Tren Outstanding (Akumulasi Tahunan per Bulan)")
 
@@ -130,22 +130,38 @@ if needed_cols.issubset(df_f.columns):
 
     df_tren = df_f.copy()
 
-    # Pastikan Periode datetime
+    # Pastikan datetime
     df_tren["Periode"] = pd.to_datetime(df_tren["Periode"], errors="coerce")
 
-    # Ambil komponen waktu
     df_tren["Tahun"] = df_tren["Periode"].dt.year
     df_tren["Bulan"] = df_tren["Periode"].dt.month
     df_tren["Tanggal"] = df_tren["Periode"].dt.day
 
-    # Label bulan + tanggal (contoh: 31 Januari)
+    # Mapping bulan Indonesia (ANTI ERROR LOCALE)
+    bulan_id = {
+        1: "Januari",
+        2: "Februari",
+        3: "Maret",
+        4: "April",
+        5: "Mei",
+        6: "Juni",
+        7: "Juli",
+        8: "Agustus",
+        9: "September",
+        10: "Oktober",
+        11: "November",
+        12: "Desember",
+    }
+
+    df_tren["Nama_Bulan"] = df_tren["Bulan"].map(bulan_id)
+
     df_tren["Bulan_Tanggal"] = (
         df_tren["Tanggal"].astype(str)
         + " "
-        + df_tren["Periode"].dt.month_name(locale="id")
+        + df_tren["Nama_Bulan"]
     )
 
-    # Agregasi: jumlah Value per Tahun, Bulan_Tanggal, Jenis
+    # Agregasi
     agg_df = (
         df_tren
         .groupby(["Tahun", "Bulan", "Bulan_Tanggal", "Jenis"], as_index=False)
@@ -154,7 +170,6 @@ if needed_cols.issubset(df_f.columns):
         .sort_values(["Tahun", "Bulan"])
     )
 
-    # Area chart (line + bayangan)
     fig = px.area(
         agg_df,
         x="Bulan_Tanggal",
@@ -180,7 +195,7 @@ else:
     )
 
 # ===============================
-# TABLE (SELALU TAMPIL)
+# TABLE
 # ===============================
 st.subheader("📋 Data Detail")
 st.dataframe(df_f, use_container_width=True)
