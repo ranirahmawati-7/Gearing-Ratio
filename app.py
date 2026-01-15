@@ -252,25 +252,25 @@ st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # TABEL HASIL OLAHAN
 # ===============================
-st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR")
+with st.expander("📋 Tabel Hasil Pengolahan OS Penjaminan KUR", expanded=False):
 
-st.dataframe(
-    df_kur_agg.style.format({
-        "OS_KUR_Rp": "Rp {:,.2f}",
-        "OS_KUR_T": "{:.2f}"
-    }),
-    use_container_width=True
-)
-
-# ===============================
-# DOWNLOAD
-# ===============================
-st.download_button(
-    "⬇️ Download Hasil OS KUR",
-    df_kur_agg.to_csv(index=False).encode("utf-8"),
-    "os_penjaminan_kur.csv",
-    "text/csv"
-)
+        st.dataframe(
+            df_kur_agg.style.format({
+                "OS_KUR_Rp": "Rp {:,.2f}",
+                "OS_KUR_T": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil OS KUR",
+            df_kur_agg.to_csv(index=False).encode("utf-8"),
+            "os_penjaminan_kur.csv",
+            "text/csv"
+        )
 
 #=============================================================================================================================
 #========================================================================================================================================
