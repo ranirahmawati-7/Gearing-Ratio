@@ -4,6 +4,13 @@ import plotly.express as px
 import re
 
 # ===============================
+# CONFIG
+# ===============================
+st.set_page_config(
+    page_title="Dashboard KUR & PEN",
+    layout="wide"
+)
+# ===============================
 # HEADER DENGAN LOGO
 # ===============================
 col_logo, col_title = st.columns([1, 8])
@@ -24,14 +31,6 @@ with col_title:
         unsafe_allow_html=True
     )
 
-
-# ===============================
-# CONFIG
-# ===============================
-st.set_page_config(
-    page_title="Dashboard KUR & PEN",
-    layout="wide"
-)
 st.info("Website ini akan otomatis menampilkan dashboard untuk perhitungan Trend Gearing Ratio setelah anda mengupload file dengan format xlxs atau csv, dan pastikan format tabel yang akan diinput sesuai dengan contoh")
 # Tampilkan gambar contoh format Excel
 st.image(
@@ -51,21 +50,6 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is None:
     st.info("Silakan upload file terlebih dahulu")
-# ===============================
-# FOOTER
-# ===============================
-st.markdown("---")
-
-st.markdown(
-    """
-    <div style="text-align:center; color:gray; font-size:13px;">
-        © 2026 | Dashboard Gearing Ratio KUR & PEN<br>
-        Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
     st.stop()
 
 # ===============================
