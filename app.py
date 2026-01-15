@@ -511,7 +511,7 @@ df_gear["GR_KUR_PEN"] = df_gear["KUR_PEN_Total_Rp"] / df_gear["Ekuitas_Rp"]
 fig = px.line(
     df_gear,
     x="Periode_Label",
-    y="Gearing_Ratio",
+    y="GR_KUR_PEN",
     markers=True
 )
 
