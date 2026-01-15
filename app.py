@@ -4,6 +4,29 @@ import plotly.express as px
 import re
 
 # ===============================
+# HEADER
+# ===============================
+st.markdown(
+    """
+    <div style="
+        background-color:#f5f7fa;
+        padding:20px;
+        border-radius:10px;
+        margin-bottom:20px;
+    ">
+        <h1 style="text-align:center; color:#1f4e79;">
+            📊 Dashboard Gearing Ratio KUR & PEN
+        </h1>
+        <p style="text-align:center; font-size:16px;">
+            Dashboard interaktif untuk analisis Outstanding, Ekuitas, 
+            dan Trend Gearing Ratio KUR & PEN berbasis data periodik
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ===============================
 # CONFIG
 # ===============================
 st.set_page_config(
