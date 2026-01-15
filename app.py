@@ -4,27 +4,25 @@ import plotly.express as px
 import re
 
 # ===============================
-# HEADER
+# HEADER DENGAN LOGO
 # ===============================
-st.markdown(
-    """
-    <div style="
-        background-color:#f5f7fa;
-        padding:20px;
-        border-radius:10px;
-        margin-bottom:20px;
-    ">
-        <h1 style="text-align:center; color:#1f4e79;">
-            📊 Dashboard Gearing Ratio KUR & PEN
+col_logo, col_title = st.columns([1, 8])
+
+with col_logo:
+    st.image("gambar/OIP.jpg", width=90)
+
+with col_title:
+    st.markdown(
+        """
+        <h1 style="margin-bottom:0; color:#1f4e79;">
+            Dashboard Gearing Ratio KUR & PEN
         </h1>
-        <p style="text-align:center; font-size:16px;">
-            Dashboard interaktif untuk analisis Outstanding, Ekuitas, 
-            dan Trend Gearing Ratio KUR & PEN berbasis data periodik
+        <p style="margin-top:0; font-size:16px; color:gray;">
+            Analisis Outstanding, Ekuitas, dan Trend Gearing Ratio berbasis data periodik
         </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        """,
+        unsafe_allow_html=True
+    )
 
 # ===============================
 # CONFIG
