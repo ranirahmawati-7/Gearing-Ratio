@@ -581,3 +581,19 @@ st.download_button(
     "gearing_ratio_kurpen.csv",
     "text/csv"
 )
+
+#==========================================================================================================================
+# ===============================
+# FOOTER
+# ===============================
+st.markdown("---")
+
+st.markdown(
+    """
+    <div style="text-align:center; color:gray; font-size:13px;">
+        © 2026 | Dashboard Gearing Ratio KUR & PEN<br>
+        Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
