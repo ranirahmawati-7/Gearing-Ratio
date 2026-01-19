@@ -587,14 +587,91 @@ with st.expander("📋 Tabel Gearing Ratio KUR dan PEN", expanded=False):
 
 
 #====================================================================================================================================================================
-st.title("📊 Summary GEN Type")
+# st.title("📊 Summary GEN Type")
+# # ===============================
+# # CONFIG
+# # ===============================
+# st.set_page_config(
+#     page_title="Dashboard KUR & PEN",
+#     layout="wide"
+# )
+
+# # ===============================
+# # UPLOAD FILE
+# # ===============================
+# uploaded_file1 = st.file_uploader(
+#     "📥 Upload file Excel / CSV",
+#     type=["csv", "xlsx"],
+#     key="upload_all"
+# )
+
+# if uploaded_file1 is None:
+#     st.info("Silakan upload file terlebih dahulu")
+#     st.stop()
+
+# # ===============================
+# # LOAD DATA
+# # ===============================
+# @st.cache_data
+# def load_data(file):
+#     if file.name.endswith(".csv"):
+#         return pd.read_csv(file)
+#     return pd.read_excel(file)
+
+# df1 = load_data(uploaded_file1)
+
+# # ===============================
+# # CLEAN VALUE (AMAN FORMAT INDONESIA)
+# # ===============================
+# def parse_value(val):
+#     if pd.isna(val):
+#         return None
+#     if isinstance(val, (int, float)):
+#         return float(val)
+
+#     text = str(val).strip()
+
+#     # format Indonesia: 516.859.837.493,95
+#     if "." in text and "," in text:
+#         text = text.replace(".", "").replace(",", ".")
+#     elif "." in text and "," not in text:
+#         text = text.replace(".", "")
+
+#     try:
+#         return float(text)
+#     except:
+#         return None
+
+# df1["Value"] = df1["Value"].apply(parse_value)
+
+# # ===============================
+# # SIDEBAR FILTER
+# # ===============================
+# st.sidebar.header("🔎 Filter Data")
+
+# df_f1 = df1.copy()
+
+# # ===============================
+# # PREVIEW DATA (MENTAH - TANPA AGREGASI)
+# # ===============================
+# with st.expander("👀 Preview Data (Klik untuk tampil / sembunyi)", expanded=False):
+
+#     st.dataframe(
+#         df_f1.style.format({"Value": "Rp {:,.2f}"}),
+#         use_container_width=True
+#     )
+import streamlit as st
+import pandas as pd
+
 # ===============================
-# CONFIG
+# PAGE CONFIG (HARUS PALING ATAS)
 # ===============================
 st.set_page_config(
     page_title="Dashboard KUR & PEN",
     layout="wide"
 )
+
+st.title("📊 Summary GEN Type")
 
 # ===============================
 # UPLOAD FILE
@@ -610,18 +687,48 @@ if uploaded_file1 is None:
     st.stop()
 
 # ===============================
+# GET SHEET NAMES (JIKA EXCEL)
+# ===============================
+sheet_names = None
+
+if uploaded_file1.name.endswith(".xlsx"):
+    xls = pd.ExcelFile(uploaded_file1)
+    sheet_names = xls.sheet_names
+
+# ===============================
+# SIDEBAR FILTER
+# ===============================
+st.sidebar.header("🔎 Filter Data")
+
+if sheet_names:
+    selected_sheet = st.sidebar.selectbox(
+        "📄 Pilih Sheet",
+        sheet_names,
+        key="select_sheet"
+    )
+else:
+    selected_sheet = None
+
+# ===============================
 # LOAD DATA
 # ===============================
-@st.cache_data
-def load_data(file):
+@st.cache_data(show_spinner=True)
+def load_data(file, sheet_name=None):
     if file.name.endswith(".csv"):
         return pd.read_csv(file)
-    return pd.read_excel(file)
+    return pd.read_excel(file, sheet_name=sheet_name)
 
-df1 = load_data(uploaded_file1)
+df1 = load_data(uploaded_file1, selected_sheet)
 
 # ===============================
-# CLEAN VALUE (AMAN FORMAT INDONESIA)
+# VALIDASI DATA
+# ===============================
+if df1.empty:
+    st.warning("⚠️ Sheet ini kosong")
+    st.stop()
+
+# ===============================
+# CLEAN VALUE (FORMAT INDONESIA)
 # ===============================
 def parse_value(val):
     if pd.isna(val):
@@ -631,7 +738,7 @@ def parse_value(val):
 
     text = str(val).strip()
 
-    # format Indonesia: 516.859.837.493,95
+    # Format Indonesia: 516.859.837.493,95
     if "." in text and "," in text:
         text = text.replace(".", "").replace(",", ".")
     elif "." in text and "," not in text:
@@ -642,24 +749,28 @@ def parse_value(val):
     except:
         return None
 
-df1["Value"] = df1["Value"].apply(parse_value)
+if "Value" in df1.columns:
+    df1["Value"] = df1["Value"].apply(parse_value)
 
 # ===============================
-# SIDEBAR FILTER
-# ===============================
-st.sidebar.header("🔎 Filter Data")
-
-df_f1 = df1.copy()
-
-# ===============================
-# PREVIEW DATA (MENTAH - TANPA AGREGASI)
+# PREVIEW DATA
 # ===============================
 with st.expander("👀 Preview Data (Klik untuk tampil / sembunyi)", expanded=False):
+    if "Value" in df1.columns:
+        st.dataframe(
+            df1.style.format({"Value": "Rp {:,.2f}"}),
+            use_container_width=True
+        )
+    else:
+        st.dataframe(df1, use_container_width=True)
 
-    st.dataframe(
-        df_f1.style.format({"Value": "Rp {:,.2f}"}),
-        use_container_width=True
-    )
+# ===============================
+# INFO DATA
+# ===============================
+st.markdown("### ℹ️ Info Data")
+st.write("Jumlah baris:", len(df1))
+st.write("Jumlah kolom:", len(df1.columns))
+st.write("Nama kolom:", list(df1.columns))
 
 
 #==========================================================================================================================
