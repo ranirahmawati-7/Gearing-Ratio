@@ -616,7 +616,7 @@ def load_data(file):
         return pd.read_csv(file)
     return pd.read_excel(file)
 
-df1 = load_data(uploaded_file)
+df1 = load_data(uploaded_file1)
 
 #==========================================================================================================================
 # ===============================
