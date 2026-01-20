@@ -624,7 +624,7 @@ else:
     sheet_names = ["CSV"]
 
 # Skip sheet Proyeksi
-sheet_names = [s for s in sheet_names if s.lower() != "proyeksi"]
+#sheet_names = [s for s in sheet_names if s.lower() != "proyeksi"]
 
 # ===============================
 # LOAD DATA
@@ -758,6 +758,97 @@ for sheet in sheet_names:
     if df_f.empty:
         st.warning("Data kosong setelah filter")
         continue
+#=============================================================================
+    # ===============================
+    # KHUSUS SHEET PROYEKSI
+    # OS GROSS & OS NET
+    # ===============================
+    if sheet.lower() == "proyeksi":
+    
+        st.subheader("📊 Proyeksi Outstanding")
+    
+        col_dim = "Dimensi"     # OS Gross / OS Net
+        col_per = "Periode"
+        col_val = "Value"
+    
+        # ===============================
+        # OS GROSS
+        # ===============================
+        st.markdown("### 🔹 OS Gross")
+    
+        df_gross = df_f[
+            df_f[col_dim].str.lower() == "os gross"
+        ].dropna(subset=[col_val])
+    
+        if df_gross.empty:
+            st.warning("Data OS Gross tidak tersedia")
+        else:
+            df_gross_agg = (
+                df_gross
+                .groupby(col_per, as_index=False)
+                .agg(Total_Value=(col_val, "sum"))
+            )
+    
+            fig_gross = px.bar(
+                df_gross_agg,
+                x=col_per,
+                y="Total_Value",
+                text="Total_Value",
+                title="📊 Proyeksi OS Gross"
+            )
+    
+            fig_gross.update_traces(
+                texttemplate="%{text:,.0f}",
+                textposition="outside"
+            )
+    
+            fig_gross.update_layout(
+                yaxis_title="Nilai (Rp)",
+                height=450
+            )
+    
+            st.plotly_chart(fig_gross, use_container_width=True)
+    
+        # ===============================
+        # OS NET
+        # ===============================
+        st.markdown("### 🔹 OS Net")
+    
+        df_net = df_f[
+            df_f[col_dim].str.lower() == "os net"
+        ].dropna(subset=[col_val])
+    
+        if df_net.empty:
+            st.warning("Data OS Net tidak tersedia")
+        else:
+            df_net_agg = (
+                df_net
+                .groupby(col_per, as_index=False)
+                .agg(Total_Value=(col_val, "sum"))
+            )
+    
+            fig_net = px.bar(
+                df_net_agg,
+                x=col_per,
+                y="Total_Value",
+                text="Total_Value",
+                title="📊 Proyeksi OS Net"
+            )
+    
+            fig_net.update_traces(
+                texttemplate="%{text:,.0f}",
+                textposition="outside"
+            )
+    
+            fig_net.update_layout(
+                yaxis_title="Nilai (Rp)",
+                height=450
+            )
+    
+            st.plotly_chart(fig_net, use_container_width=True)
+    
+        continue   # ⬅️ penting: skip grafik generik di bawah
+
 
     # ===============================
     # KHUSUS SHEET TENOR
