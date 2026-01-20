@@ -809,6 +809,53 @@ for sheet in sheet_names:
         )
     
         st.plotly_chart(fig_tenor, use_container_width=True)
+
+    #-------------------------------------------------------------------------------------------
+    # ===============================
+    # KHUSUS SHEET JENIS POLIS
+    # PLOT VALUE vs JENIS POLIS
+    # ===============================
+    if sheet.lower() == "jenis polis":
+    
+        st.subheader("📊 Distribusi Nilai berdasarkan Jenis Polis")
+    
+        df_polis = df_f.copy()
+    
+        # Pastikan data valid
+        df_polis = df_polis.dropna(subset=["Dimensi", "Value"])
+    
+        # Agregasi per Jenis Polis (SPR, NEW, dll)
+        df_polis_agg = (
+            df_polis
+            .groupby("Dimensi", as_index=False)
+            .agg(Total_Value=("Value", "sum"))
+            .sort_values("Dimensi")
+        )
+    
+        fig_polis = px.bar(
+            df_polis_agg,
+            x="Dimensi",
+            y="Total_Value",
+            text="Total_Value",
+            labels={
+                "Dimensi": "Jenis Polis",
+                "Total_Value": "Nilai"
+            }
+        )
+    
+        fig_polis.update_traces(
+            texttemplate="%{text:,.2f}",
+            textposition="outside"
+        )
+    
+        fig_polis.update_layout(
+            xaxis_title="Jenis Polis",
+            yaxis_title="Nilai (Rupiah)",
+            title="📊 Total Nilai berdasarkan Jenis Polis",
+            height=450
+        )
+    
+        st.plotly_chart(fig_polis, use_container_width=True)
     
 
     # ===============================
