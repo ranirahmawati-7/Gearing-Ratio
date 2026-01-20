@@ -789,64 +789,53 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 #=+======Untuk Memperjelas Jumblah Debitur ================================
 # ===============================
-# PLOT KHUSUS JUMLAH DEBITUR
+# GRAFIK KHUSUS JUMLAH DEBITUR
 # ===============================
-df_debitur = df_f[df_f["Metrics"].str.lower() == "jumlah debitur"].copy()
+st.subheader("📊 Jumlah Debitur")
+
+# Ambil hanya Metrics = Jumlah Debitur
+df_debitur = (
+    df_f[df_f["Metrics"].str.lower().str.contains("debitur", na=False)]
+    .groupby("Metrics", as_index=False)
+    .agg(Total_Debitur=("Value", "sum"))
+)
 
 if df_debitur.empty:
-    st.warning("⚠️ Tidak ada data 'Jumlah Debitur' untuk filter yang dipilih")
+    st.info("ℹ️ Tidak ada data Jumlah Debitur pada filter ini")
 else:
-    # Agregasi
-    df_debitur_agg = (
-        df_debitur
-        .groupby(["KUR/PEN", "Generasi"], as_index=False)
-        .agg(Jumlah_Debitur=("Value", "sum"))
-    )
-
-    # Buat label jenis
-    df_debitur_agg["Jenis"] = (
-        df_debitur_agg["KUR/PEN"] + " - " + df_debitur_agg["Generasi"]
-    )
-
-    # ===============================
-    # GRAFIK BATANG JUMLAH DEBITUR
-    # ===============================
-    st.subheader("📊 Jumlah Debitur per Jenis")
-
-    fig_debitur = px.bar(
-        df_debitur_agg,
-        x="Jenis",
-        y="Jumlah_Debitur",
-        text="Jumlah_Debitur",
+    fig_deb = px.bar(
+        df_debitur,
+        x="Metrics",
+        y="Total_Debitur",
+        text="Total_Debitur",
         labels={
-            "Jenis": "Jenis",
-            "Jumlah_Debitur": "Jumlah Debitur"
+            "Metrics": "Metrics",
+            "Total_Debitur": "Jumlah Debitur"
         }
     )
 
-    fig_debitur.update_traces(
+    fig_deb.update_traces(
         texttemplate="%{text:,.0f}",
         textposition="outside"
     )
 
-    fig_debitur.update_layout(
+    fig_deb.update_layout(
         yaxis_title="Jumlah Debitur",
-        xaxis_title="Jenis",
-        uniformtext_minsize=10,
-        uniformtext_mode="hide"
+        xaxis_title="Metrics"
     )
 
-    st.plotly_chart(fig_debitur, use_container_width=True)
+    st.plotly_chart(fig_deb, use_container_width=True)
 
-    # ===============================
-    # TABEL PENDUKUNG
-    # ===============================
-    with st.expander("📋 Tabel Jumlah Debitur"):
+# ===============================
+# TABEL JUMLAH DEBITUR
+# ===============================
+with st.expander("📋 Detail Jumlah Debitur"):
+    if not df_debitur.empty:
         st.dataframe(
-            df_debitur_agg[["Jenis", "Jumlah_Debitur"]]
-            .style.format({"Jumlah_Debitur": "{:,.0f}"}),
+            df_debitur.style.format({"Total_Debitur": "{:,.0f}"}),
             use_container_width=True
         )
+
 
 #==========================================================================================================================
 # ===============================
