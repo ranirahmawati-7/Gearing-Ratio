@@ -810,12 +810,12 @@ for sheet in sheet_names:
             st.plotly_chart(fig_gross, use_container_width=True)
     
         # ===============================
-        # OS NET
+        # OS NETT
         # ===============================
-        st.markdown("### 🔹 OS Net")
+        st.markdown("### 🔹 OS Nett")
     
         df_net = df_f[
-            df_f[col_dim].str.lower() == "os net"
+            df_f[col_dim].str.lower() == "os nett"
         ].dropna(subset=[col_val])
     
         if df_net.empty:
@@ -832,7 +832,7 @@ for sheet in sheet_names:
                 x=col_per,
                 y="Total_Value",
                 text="Total_Value",
-                title="📊 Proyeksi OS Net"
+                title="📊 Proyeksi OS Nett"
             )
     
             fig_net.update_traces(
