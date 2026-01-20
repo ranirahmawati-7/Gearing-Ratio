@@ -587,79 +587,7 @@ with st.expander("📋 Tabel Gearing Ratio KUR dan PEN", expanded=False):
 
 
 #====================================================================================================================================================================
-# st.title("📊 Summary GEN Type")
-# # ===============================
-# # CONFIG
-# # ===============================
-# st.set_page_config(
-#     page_title="Dashboard KUR & PEN",
-#     layout="wide"
-# )
 
-# # ===============================
-# # UPLOAD FILE
-# # ===============================
-# uploaded_file1 = st.file_uploader(
-#     "📥 Upload file Excel / CSV",
-#     type=["csv", "xlsx"],
-#     key="upload_all"
-# )
-
-# if uploaded_file1 is None:
-#     st.info("Silakan upload file terlebih dahulu")
-#     st.stop()
-
-# # ===============================
-# # LOAD DATA
-# # ===============================
-# @st.cache_data
-# def load_data(file):
-#     if file.name.endswith(".csv"):
-#         return pd.read_csv(file)
-#     return pd.read_excel(file)
-
-# df1 = load_data(uploaded_file1)
-
-# # ===============================
-# # CLEAN VALUE (AMAN FORMAT INDONESIA)
-# # ===============================
-# def parse_value(val):
-#     if pd.isna(val):
-#         return None
-#     if isinstance(val, (int, float)):
-#         return float(val)
-
-#     text = str(val).strip()
-
-#     # format Indonesia: 516.859.837.493,95
-#     if "." in text and "," in text:
-#         text = text.replace(".", "").replace(",", ".")
-#     elif "." in text and "," not in text:
-#         text = text.replace(".", "")
-
-#     try:
-#         return float(text)
-#     except:
-#         return None
-
-# df1["Value"] = df1["Value"].apply(parse_value)
-
-# # ===============================
-# # SIDEBAR FILTER
-# # ===============================
-# st.sidebar.header("🔎 Filter Data")
-
-# df_f1 = df1.copy()
-
-# # ===============================
-# # PREVIEW DATA (MENTAH - TANPA AGREGASI)
-# # ===============================
-# with st.expander("👀 Preview Data (Klik untuk tampil / sembunyi)", expanded=False):
-
-#     st.dataframe(
-#         df_f1.style.format({"Value": "Rp {:,.2f}"}),
-#         use_container_width=True
-#     )
 import streamlit as st
 import pandas as pd
 
@@ -769,8 +697,107 @@ with st.expander("👀 Preview Data (Klik untuk tampil / sembunyi)", expanded=Fa
 # ===============================
 st.markdown("### ℹ️ Info Data")
 st.write("Jumlah baris:", len(df1))
-st.write("Jumlah kolom:", len(df1.columns))
-st.write("Nama kolom:", list(df1.columns))
+
+# ===============================
+# FILTER TAMBAHAN (DATA LEVEL)
+# ===============================
+required_cols = {"Periode", "KUR/PEN", "Generasi", "Metrics", "Value"}
+missing_cols = required_cols - set(df1.columns)
+
+if missing_cols:
+    st.error(f"❌ Kolom tidak lengkap: {missing_cols}")
+    st.stop()
+
+# Sidebar filters
+periode_opt = sorted(df1["Periode"].dropna().unique())
+kurpen_opt = sorted(df1["KUR/PEN"].dropna().unique())
+gen_opt = sorted(df1["Generasi"].dropna().unique())
+
+selected_periode = st.sidebar.multiselect(
+    "📅 Pilih Periode",
+    periode_opt,
+    default=periode_opt
+)
+
+selected_kurpen = st.sidebar.multiselect(
+    "🏦 Pilih KUR / PEN",
+    kurpen_opt,
+    default=kurpen_opt
+)
+
+selected_gen = st.sidebar.multiselect(
+    "🧬 Pilih Generasi",
+    gen_opt,
+    default=gen_opt
+)
+
+# ===============================
+# APPLY FILTER
+# ===============================
+df_f = df1[
+    (df1["Periode"].isin(selected_periode)) &
+    (df1["KUR/PEN"].isin(selected_kurpen)) &
+    (df1["Generasi"].isin(selected_gen))
+].copy()
+
+if df_f.empty:
+    st.warning("⚠️ Data kosong setelah filter")
+    st.stop()
+
+# ===============================
+# AGREGASI (SUM) & KONVERSI KE T
+# ===============================
+df_agg = (
+    df_f
+    .groupby("Metrics", as_index=False)
+    .agg(Total_Value=("Value", "sum"))
+)
+
+# Konversi ke Triliun
+df_agg["Total_T"] = df_agg["Total_Value"] / 1_000_000_000_000
+
+# ===============================
+# GRAFIK BATANG
+# ===============================
+import plotly.express as px
+
+st.subheader("📊 Grafik Batang Summary Metrics (Dalam Triliun)")
+
+fig = px.bar(
+    df_agg,
+    x="Metrics",
+    y="Total_T",
+    text="Total_T",
+    labels={
+        "Metrics": "Metrics",
+        "Total_T": "Total (Triliun)"
+    }
+)
+
+fig.update_traces(
+    texttemplate="%{text:,.2f} T",
+    textposition="outside"
+)
+
+fig.update_layout(
+    yaxis_title="Total (Triliun)",
+    xaxis_title="Metrics",
+    uniformtext_minsize=10,
+    uniformtext_mode="hide"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ===============================
+# TABEL RINGKAS
+# ===============================
+with st.expander("📋 Tabel Agregasi (Triliun)"):
+    st.dataframe(
+        df_agg[["Metrics", "Total_T"]]
+        .rename(columns={"Total_T": "Total (T)"})
+        .style.format({"Total (T)": "{:,.2f}"}),
+        use_container_width=True
+    )
 
 
 #==========================================================================================================================
