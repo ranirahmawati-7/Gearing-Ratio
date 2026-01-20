@@ -789,53 +789,78 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 #=+======Untuk Memperjelas Jumblah Debitur ================================
 # ===============================
-# GRAFIK KHUSUS JUMLAH DEBITUR
+# GRAFIK KOMBINASI (FOKUS JUMLAH DEBITUR)
 # ===============================
-st.subheader("📊 Jumlah Debitur")
+st.subheader("📊 Jumlah Debitur (Fokus) vs Metrics Lainnya")
 
-# Ambil hanya Metrics = Jumlah Debitur
-df_debitur = (
-    df_f[df_f["Metrics"].str.lower().str.contains("debitur", na=False)]
+# Agregasi ulang per Metrics
+df_mix = (
+    df_f
     .groupby("Metrics", as_index=False)
-    .agg(Total_Debitur=("Value", "sum"))
+    .agg(Total_Value=("Value", "sum"))
 )
 
-if df_debitur.empty:
-    st.info("ℹ️ Tidak ada data Jumlah Debitur pada filter ini")
-else:
-    fig_deb = px.bar(
-        df_debitur,
-        x="Metrics",
-        y="Total_Debitur",
-        text="Total_Debitur",
-        labels={
-            "Metrics": "Metrics",
-            "Total_Debitur": "Jumlah Debitur"
-        }
-    )
+# Identifikasi jumlah debitur
+mask_debitur = df_mix["Metrics"].str.lower().str.contains("debitur", na=False)
 
-    fig_deb.update_traces(
-        texttemplate="%{text:,.0f}",
-        textposition="outside"
-    )
+# Nilai maksimum debitur (acuan skala)
+max_debitur = df_mix.loc[mask_debitur, "Total_Value"].max()
 
-    fig_deb.update_layout(
-        yaxis_title="Jumlah Debitur",
-        xaxis_title="Metrics"
-    )
+# Nilai maksimum non-debitur
+max_non_debitur = df_mix.loc[~mask_debitur, "Total_Value"].max()
 
-    st.plotly_chart(fig_deb, use_container_width=True)
+# Faktor skala agar non-debitur tidak mendominasi
+scale_factor = max_debitur / max_non_debitur if max_non_debitur > 0 else 1
+
+# Buat kolom nilai tampil
+df_mix["Display_Value"] = df_mix["Total_Value"]
+df_mix.loc[~mask_debitur, "Display_Value"] = (
+    df_mix.loc[~mask_debitur, "Total_Value"] * scale_factor
+)
+
+# Label kategori
+df_mix["Kategori"] = df_mix["Metrics"].apply(
+    lambda x: "Jumlah Debitur" if "debitur" in str(x).lower() else "Metrics Lainnya (Diskalakan)"
+)
 
 # ===============================
-# TABEL JUMLAH DEBITUR
+# PLOT
 # ===============================
-with st.expander("📋 Detail Jumlah Debitur"):
-    if not df_debitur.empty:
-        st.dataframe(
-            df_debitur.style.format({"Total_Debitur": "{:,.0f}"}),
-            use_container_width=True
-        )
+fig_mix = px.bar(
+    df_mix,
+    x="Metrics",
+    y="Display_Value",
+    color="Kategori",
+    text="Display_Value",
+    labels={
+        "Display_Value": "Nilai (Skala Visual)",
+        "Metrics": "Metrics"
+    }
+)
 
+fig_mix.update_traces(
+    texttemplate="%{text:,.0f}",
+    textposition="outside"
+)
+
+fig_mix.update_layout(
+    yaxis_title="Nilai (Jumlah Debitur asli, Metrics lain diskalakan)",
+    xaxis_title="Metrics",
+    legend_title="Keterangan",
+    uniformtext_minsize=9,
+    uniformtext_mode="hide"
+)
+
+st.plotly_chart(fig_mix, use_container_width=True)
+
+# ===============================
+# CATATAN INTERPRETASI
+# ===============================
+st.caption(
+    "ℹ️ Catatan: Jumlah Debitur ditampilkan dengan nilai asli. "
+    "OS, Plafon, dan metrics lain telah diskalakan agar tetap terlihat "
+    "tanpa menghilangkan fokus utama pada Jumlah Debitur."
+)
 
 #==========================================================================================================================
 # ===============================
