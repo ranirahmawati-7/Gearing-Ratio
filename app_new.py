@@ -901,7 +901,7 @@ for sheet in sheet_names:
             height=450
         )
     
-        st.plotly_chart(fig_polis, use_container_width=True)
+        st.plotly_chart(fig_kredit, use_container_width=True)
     
     
 
