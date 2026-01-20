@@ -789,78 +789,90 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 #=+======Untuk Memperjelas Jumblah Debitur ================================
 # ===============================
-# GRAFIK KOMBINASI (FOKUS JUMLAH DEBITUR)
+# GRAFIK BATANG DUAL AXIS
+# (FINANSIAL vs JUMLAH DEBITUR)
 # ===============================
-st.subheader("📊 Jumlah Debitur (Fokus) vs Metrics Lainnya")
+st.subheader("📊 Metrics vs Jumlah Debitur (Dual Axis)")
 
-# Agregasi ulang per Metrics
-df_mix = (
+# Agregasi semua metrics
+df_dual = (
     df_f
     .groupby("Metrics", as_index=False)
     .agg(Total_Value=("Value", "sum"))
 )
 
-# Identifikasi jumlah debitur
-mask_debitur = df_mix["Metrics"].str.lower().str.contains("debitur", na=False)
-
-# Nilai maksimum debitur (acuan skala)
-max_debitur = df_mix.loc[mask_debitur, "Total_Value"].max()
-
-# Nilai maksimum non-debitur
-max_non_debitur = df_mix.loc[~mask_debitur, "Total_Value"].max()
-
-# Faktor skala agar non-debitur tidak mendominasi
-scale_factor = max_debitur / max_non_debitur if max_non_debitur > 0 else 1
-
-# Buat kolom nilai tampil
-df_mix["Display_Value"] = df_mix["Total_Value"]
-df_mix.loc[~mask_debitur, "Display_Value"] = (
-    df_mix.loc[~mask_debitur, "Total_Value"] * scale_factor
+# Identifikasi debitur
+df_dual["Jenis"] = df_dual["Metrics"].apply(
+    lambda x: "Debitur" if "debitur" in str(x).lower() else "Finansial"
 )
 
-# Label kategori
-df_mix["Kategori"] = df_mix["Metrics"].apply(
-    lambda x: "Jumlah Debitur" if "debitur" in str(x).lower() else "Metrics Lainnya (Diskalakan)"
+# Konversi
+df_dual["Value_T"] = df_dual.apply(
+    lambda r: r["Total_Value"] / 1_000_000_000_000
+    if r["Jenis"] == "Finansial" else None,
+    axis=1
+)
+
+df_dual["Value_Debitur"] = df_dual.apply(
+    lambda r: r["Total_Value"]
+    if r["Jenis"] == "Debitur" else None,
+    axis=1
+)
+
+import plotly.graph_objects as go
+
+fig = go.Figure()
+
+# --- BAR FINANSIAL (Y KIRI) ---
+fig.add_bar(
+    x=df_dual["Metrics"],
+    y=df_dual["Value_T"],
+    name="Nilai Finansial (Triliun)",
+    yaxis="y",
+    marker_opacity=0.7
+)
+
+# --- BAR JUMLAH DEBITUR (Y KANAN) ---
+fig.add_bar(
+    x=df_dual["Metrics"],
+    y=df_dual["Value_Debitur"],
+    name="Jumlah Debitur",
+    yaxis="y2",
+    marker_opacity=1.0
 )
 
 # ===============================
-# PLOT
+# LAYOUT DUAL AXIS
 # ===============================
-fig_mix = px.bar(
-    df_mix,
-    x="Metrics",
-    y="Display_Value",
-    color="Kategori",
-    text="Display_Value",
-    labels={
-        "Display_Value": "Nilai (Skala Visual)",
-        "Metrics": "Metrics"
-    }
+fig.update_layout(
+    barmode="group",
+    xaxis=dict(title="Metrics"),
+
+    yaxis=dict(
+        title="Nilai Finansial (Triliun)",
+        showgrid=True,
+        zeroline=True
+    ),
+
+    yaxis2=dict(
+        title="Jumlah Debitur",
+        overlaying="y",
+        side="right",
+        showgrid=False
+    ),
+
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    ),
+
+    title="Perbandingan Metrics dengan Fokus Jumlah Debitur"
 )
 
-fig_mix.update_traces(
-    texttemplate="%{text:,.0f}",
-    textposition="outside"
-)
-
-fig_mix.update_layout(
-    yaxis_title="Nilai (Jumlah Debitur asli, Metrics lain diskalakan)",
-    xaxis_title="Metrics",
-    legend_title="Keterangan",
-    uniformtext_minsize=9,
-    uniformtext_mode="hide"
-)
-
-st.plotly_chart(fig_mix, use_container_width=True)
-
-# ===============================
-# CATATAN INTERPRETASI
-# ===============================
-st.caption(
-    "ℹ️ Catatan: Jumlah Debitur ditampilkan dengan nilai asli. "
-    "OS, Plafon, dan metrics lain telah diskalakan agar tetap terlihat "
-    "tanpa menghilangkan fokus utama pada Jumlah Debitur."
-)
+st.plotly_chart(fig, use_container_width=True)
 
 #==========================================================================================================================
 # ===============================
