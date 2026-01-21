@@ -38,7 +38,7 @@ def bagian_1_proyeksi():
         caption="Contoh format file Excel (.xlsx) yang didukung",
         use_container_width=True
     )
-    st.title("📊 Summary Tend Gearing Ratio")
+    st.title("📈 Summary Tend Gearing Ratio")
     
     # ===============================
     # UPLOAD FILE
