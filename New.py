@@ -601,8 +601,8 @@ if uploaded_file_penjamin is not None:
         # ===============================
         # GET SHEET NAMES
         # ===============================
-        if uploaded_file.name.endswith(".xlsx"):
-            sheet_names = pd.ExcelFile(uploaded_file).sheet_names
+        if uploaded_file_penjamin.name.endswith(".xlsx"):
+            sheet_names = pd.ExcelFile(uploaded_file_penjamin).sheet_names
         else:
             sheet_names = ["CSV"]
         
@@ -646,7 +646,7 @@ if uploaded_file_penjamin is not None:
             st.divider()
             st.header(f"📘 by {sheet}")
         
-            df_raw = load_data(uploaded_file, sheet if sheet != "CSV" else None)
+            df_raw = load_data(uploaded_file_penjamin, sheet if sheet != "CSV" else None)
         
             if df_raw.empty:
                 st.warning("Sheet kosong")
