@@ -1218,7 +1218,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.sidebar.title("📌 Menu Utama")
+st.sidebar.title("📌 Menu")
 
 menu = st.sidebar.radio(
     "Pilih Analisis",
