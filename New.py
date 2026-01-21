@@ -1207,3 +1207,9 @@ menu = st.radio(
 )
 
 st.divider()
+
+if menu == "Bagian 1 – Proyeksi & Gearing Ratio":
+    bagian_1_proyeksi()
+
+elif menu == "Bagian 2 – Outstanding Penjaminan":
+    bagian_2_penjaminan()
