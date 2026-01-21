@@ -594,7 +594,7 @@ def bagian_1_proyeksi():
         """
         <div style="text-align:center; color:gray; font-size:13px;">
             © 2026 | PT.Askrindo<br>
-            by @Rehanda Umamil Hadi & @Rania<br>
+            by @Rehanda Umamil Hadi & @Rani Rahmawati<br>
             Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
         </div>
         """,
@@ -1206,7 +1206,7 @@ def bagian_2_penjaminan():
         """
         <div style="text-align:center; color:gray; font-size:13px;">
             © 2026 | PT.Askrindo<br>
-            by @Rehanda Umamil Hadi & @Rania<br>
+            by @Rehanda Umamil Hadi & @Rani Rahmawati<br>
             Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
         </div>
         """,
