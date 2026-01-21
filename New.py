@@ -1191,7 +1191,8 @@ def bagian_2_penjaminan():
     st.markdown(
         """
         <div style="text-align:center; color:gray; font-size:13px;">
-            © 2026 | Dashboard Gearing Ratio KUR & PEN<br>
+            © 2026 | PT.Askrindo<br>
+            by @Rehanda Umamil Hadi & @Rania<br>
             Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
         </div>
         """,
