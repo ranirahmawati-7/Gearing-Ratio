@@ -585,7 +585,21 @@ def bagian_1_proyeksi():
                 "text/csv"
             )
     
+     # ===============================
+    # FOOTER
+    # ===============================
+    st.markdown("---")
     
+    st.markdown(
+        """
+        <div style="text-align:center; color:gray; font-size:13px;">
+            © 2026 | PT.Askrindo<br>
+            by @Rehanda Umamil Hadi & @Rania<br>
+            Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     #====================================================================================================================================================================
 
 
