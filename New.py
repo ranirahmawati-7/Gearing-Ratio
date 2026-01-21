@@ -606,6 +606,29 @@ def bagian_1_proyeksi():
 def bagian_2_penjaminan():
     import plotly.express as px
     import plotly.graph_objects as go
+    # ===============================
+    # HEADER DENGAN LOGO
+    # ===============================
+    col_logo, col_title = st.columns([1, 8])
+    
+    with col_logo:
+        st.image("gambar/OIP.jpg", width=90)
+    
+    with col_title:
+        st.markdown(
+            """
+            <h1 style="margin-bottom:0; color:#1f4e79;">
+                Dashboard Gearing Ratio KUR & PEN
+            </h1>
+            <p style="margin-top:0; font-size:16px; color:gray;">
+                Analisis Outstending Penjamin (Tenor, Bank, Issued Year, Jenis Kredit, Kota, Jenis Polis dan Proyeksi)
+            </p>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    st.info("Website ini akan otomatis menampilkan dashboard untuk perhitungan Trend Gearing Ratio setelah anda mengupload file dengan format xlxs atau csv, dan pastikan format tabel yang akan diinput sesuai dengan contoh")
+    
     
     st.title("📊 Dashboard Summary Outstanding Penjamin")
     
