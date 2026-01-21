@@ -630,16 +630,7 @@ if uploaded_file_penjamin is not None:
         # ===============================
         # LOOP PER SHEET
         # ===============================
-        for sheet in sheet_names:
         
-            st.divider()
-            st.header(f"📘 by {sheet}")
-        
-            df_raw = load_data(uploaded_file_penjamin, sheet if sheet != "CSV" else None)
-        
-            if df_raw.empty:
-                st.warning("Sheet kosong")
-                continue
         
             # ===============================
             # VALIDASI STRUKTUR MINIMAL
