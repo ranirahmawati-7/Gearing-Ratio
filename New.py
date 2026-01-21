@@ -1,17 +1,15 @@
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(
+    page_title="Dashboard Gearing Ratio KUR & PEN",
+    layout="wide"
+)
+
 def bagian_1_proyeksi():
     import plotly.express as px
     import re
     
-    # ===============================
-    # CONFIG
-    # ===============================
-    st.set_page_config(
-        page_title="Dashboard",
-        layout="wide"
-    )
     # ===============================
     # HEADER DENGAN LOGO
     # ===============================
@@ -594,14 +592,6 @@ def bagian_1_proyeksi():
 def bagian_2_penjaminan():
     import plotly.express as px
     import plotly.graph_objects as go
-    
-    # ===============================
-    # PAGE CONFIG
-    # ===============================
-    st.set_page_config(
-        page_title="Dashboard KUR & PEN",
-        layout="wide"
-    )
     
     st.title("📊 Dashboard Summary Outstanding Penjamin")
     
@@ -1208,9 +1198,12 @@ def bagian_2_penjaminan():
         unsafe_allow_html=True
     )
 
-menu = st.radio("Pilih Perhitungan", [...])
+menu = st.radio(
+    "📌 Pilih Perhitungan",
+    [
+        "Bagian 1 – Proyeksi & Gearing Ratio",
+        "Bagian 2 – Outstanding Penjaminan"
+    ]
+)
 
-if menu == "...":
-    bagian_1_proyeksi()
-else:
-    bagian_2_penjaminan()
+st.divider()
