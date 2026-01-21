@@ -1199,6 +1199,11 @@ def bagian_2_penjaminan():
     )
 
 menu = st.radio(
+    st.set_page_config(
+    page_title="Dashboard Gearing Ratio KUR & PEN",
+    layout="wide"
+)
+
     "📌 Pilih Perhitungan",
     [
         "Bagian 1 – Proyeksi & Gearing Ratio",
