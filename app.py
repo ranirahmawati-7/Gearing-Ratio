@@ -10,8 +10,35 @@ st.set_page_config(
     page_title="Dashboard KUR & PEN",
     layout="wide"
 )
+# ===============================
+# HEADER DENGAN LOGO
+# ===============================
+col_logo, col_title = st.columns([1, 8])
 
-st.title("📊 Summary Outstanding Penjaminan KUR & PEN")
+with col_logo:
+    st.image("gambar/OIP.jpg", width=90)
+
+with col_title:
+    st.markdown(
+        """
+        <h1 style="margin-bottom:0; color:#1f4e79;">
+            Dashboard Gearing Ratio KUR & PEN
+        </h1>
+        <p style="margin-top:0; font-size:16px; color:gray;">
+            Analisis Outstanding, Ekuitas, dan Trend Gearing Ratio berbasis data periodik
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.info("Website ini akan otomatis menampilkan dashboard untuk perhitungan Trend Gearing Ratio setelah anda mengupload file dengan format xlxs atau csv, dan pastikan format tabel yang akan diinput sesuai dengan contoh")
+# Tampilkan gambar contoh format Excel
+st.image(
+    "gambar/ssXlsx.png",
+    caption="Contoh format file Excel (.xlsx) yang didukung",
+    use_container_width=True
+)
+st.title("📊 Summary Tend Gearing Ratio")
 
 # ===============================
 # UPLOAD FILE
@@ -165,11 +192,13 @@ df_f = df_f[df_f["Bulan_Nama"].isin(selected_months)]
 # ===============================
 # PREVIEW DATA (MENTAH - TANPA AGREGASI)
 # ===============================
-st.subheader("👀 Preview Data (Raw / As Is)")
-st.dataframe(
-    df_f.style.format({"Value": "Rp {:,.2f}"}),
-    use_container_width=True
-)
+with st.expander("👀 Preview Data (Klik untuk tampil / sembunyi)", expanded=False):
+
+    st.dataframe(
+        df_f.style.format({"Value": "Rp {:,.2f}"}),
+        use_container_width=True
+    )
+
 
 # ===============================
 # AGREGASI KHUSUS KUR (AUDITED PRIORITY)
@@ -223,25 +252,25 @@ st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # TABEL HASIL OLAHAN
 # ===============================
-st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR")
+with st.expander("📋 Tabel Hasil Pengolahan OS Penjaminan KUR", expanded=False):
 
-st.dataframe(
-    df_kur_agg.style.format({
-        "OS_KUR_Rp": "Rp {:,.2f}",
-        "OS_KUR_T": "{:.2f}"
-    }),
-    use_container_width=True
-)
-
-# ===============================
-# DOWNLOAD
-# ===============================
-st.download_button(
-    "⬇️ Download Hasil OS KUR",
-    df_kur_agg.to_csv(index=False).encode("utf-8"),
-    "os_penjaminan_kur.csv",
-    "text/csv"
-)
+        st.dataframe(
+            df_kur_agg.style.format({
+                "OS_KUR_Rp": "Rp {:,.2f}",
+                "OS_KUR_T": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil OS KUR",
+            df_kur_agg.to_csv(index=False).encode("utf-8"),
+            "os_penjaminan_kur.csv",
+            "text/csv"
+        )
 
 #=============================================================================================================================
 #========================================================================================================================================
@@ -298,25 +327,25 @@ st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # TABEL HASIL OLAHAN
 # ===============================
-st.subheader("📋 Tabel Hasil Pengolahan Ekuitas KUR")
+with st.expander("📋 Tabel Hasil Pengolahan Ekuitas KUR", expanded=False):
 
-st.dataframe(
-    df_kur_agg.style.format({
-        "Ekuitas_KUR_Rp": "Rp {:,.2f}",
-        "Ekuitas_KUR_T": "{:.2f}"
-    }),
-    use_container_width=True
-)
-
-# ===============================
-# DOWNLOAD
-# ===============================
-st.download_button(
-    "⬇️ Download Hasil Ekuitas KUR",
-    df_kur_agg.to_csv(index=False).encode("utf-8"),
-    "Ekuitas_kur.csv",
-    "text/csv"
-)
+        st.dataframe(
+            df_kur_agg.style.format({
+                "Ekuitas_KUR_Rp": "Rp {:,.2f}",
+                "Ekuitas_KUR_T": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil Ekuitas KUR",
+            df_kur_agg.to_csv(index=False).encode("utf-8"),
+            "Ekuitas_kur.csv",
+            "text/csv"
+        )
 
 #============================================================================================================================================
 #==============================================================================================================================================
@@ -373,22 +402,200 @@ st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # TABEL HASIL OLAHAN
 # ===============================
-st.subheader("📋 Tabel Hasil Pengolahan OS Penjaminan KUR & PEN")
+with st.expander("📋 Tabel Hasil Pengolahan OS Penjaminan KUR & PEN", expanded=False):
 
-st.dataframe(
-    df_kur_agg.style.format({
-        "OS_KUR_PEN_Rp": "Rp {:,.2f}",
-        "OS_KUR_PEN_T": "{:.2f}"
-    }),
-    use_container_width=True
+        st.dataframe(
+            df_kur_agg.style.format({
+                "OS_KUR_PEN_Rp": "Rp {:,.2f}",
+                "OS_KUR_PEN_T": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil OS KUR_PEN",
+            df_kur_agg.to_csv(index=False).encode("utf-8"),
+            "os_penjaminan_kur_pen.csv",
+            "text/csv"
+        )
+
+#================================================================================================================================================
+#===================================================================================================================================================
+
+# ===============================
+# AGREGASI KUR UNTUK GEaring Ratio
+# ===============================
+st.subheader("📈 Gearing Ratio KUR")
+
+# Ambil KUR Gen 1 + KUR Gen 2 untuk numerator
+df_kur_num = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2"])]
+
+# Jumlahkan Value per Periode_Label (numerator)
+df_kur_num_agg = (
+    df_kur_num.groupby(["Periode_Label"], as_index=False)
+    .agg(KUR_Total_Rp=("Value", "sum"))
 )
 
+# Ambil Ekuitas KUR (asumsi ada di df_f, misal Jenis == "Ekuitas KUR")
+df_ekuitas = df_f[df_f["Jenis"] == "Ekuitas KUR"]
+
+# Gabungkan numerator dan ekuitas berdasarkan Periode_Label
+df_gear = pd.merge(
+    df_kur_num_agg,
+    df_ekuitas[["Periode_Label", "Value"]].rename(columns={"Value": "Ekuitas_Rp"}),
+    on="Periode_Label",
+    how="left"
+)
+
+# Hitung Gearing Ratio
+df_gear["Gearing_Ratio"] = df_gear["KUR_Total_Rp"] / df_gear["Ekuitas_Rp"]
+
 # ===============================
-# DOWNLOAD
+# GRAFIK GEaring Ratio
 # ===============================
-st.download_button(
-    "⬇️ Download Hasil OS KUR_PEN",
-    df_kur_agg.to_csv(index=False).encode("utf-8"),
-    "os_penjaminan_kur_pen.csv",
-    "text/csv"
+fig = px.line(
+    df_gear,
+    x="Periode_Label",
+    y="Gearing_Ratio",
+    markers=True
+)
+
+fig.update_layout(
+    xaxis_title="Periode",
+    yaxis_title="Gearing Ratio KUR",
+    yaxis=dict(ticksuffix="x"),  # misal ratio dikali 1
+    hovermode="x unified"
+)
+
+fig.update_xaxes(
+    type="category",
+    categoryorder="array",
+    categoryarray=df_gear["Periode_Label"].tolist(),
+    tickangle=-45
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ===============================
+# TABEL HASIL
+# ===============================
+with st.expander("📋 Tabel Gearing Ratio KUR", expanded=False):
+
+        st.dataframe(
+            df_gear.style.format({
+                "KUR_Total_Rp": "Rp {:,.2f}",
+                "Ekuitas_Rp": "Rp {:,.2f}",
+                "Gearing_Ratio": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil Gearing Ratio KUR",
+            df_gear.to_csv(index=False).encode("utf-8"),
+            "gearing_ratio_kur.csv",
+            "text/csv"
+        )
+
+#================================================================================================================================================
+#===================================================================================================================================================
+
+# ===========================================
+# AGREGASI KUR UNTUK GEaring Ratio KUR & PEN
+# ===========================================
+st.subheader("📈 Gearing Ratio KUR & PEN")
+
+# Ambil KUR Gen 1 + KUR Gen 2 untuk numerator
+df_kur_num = df_f[df_f["Jenis"].isin(["KUR Gen 1", "KUR Gen 2", "PEN Gen 1", "PEN Gen 2"])]
+
+# Jumlahkan Value per Periode_Label (numerator)
+df_kur_num_agg = (
+    df_kur_num.groupby(["Periode_Label"], as_index=False)
+    .agg(KUR_PEN_Total_Rp=("Value", "sum"))
+)
+
+# Ambil Ekuitas KUR (asumsi ada di df_f, misal Jenis == "Ekuitas KUR")
+df_ekuitas = df_f[df_f["Jenis"] == "Ekuitas KUR"]
+
+# Gabungkan numerator dan ekuitas berdasarkan Periode_Label
+df_gear = pd.merge(
+    df_kur_num_agg,
+    df_ekuitas[["Periode_Label", "Value"]].rename(columns={"Value": "Ekuitas_Rp"}),
+    on="Periode_Label",
+    how="left"
+)
+
+# Hitung Gearing Ratio
+df_gear["GR_KUR_PEN"] = df_gear["KUR_PEN_Total_Rp"] / df_gear["Ekuitas_Rp"]
+
+# ===============================
+# GRAFIK GEaring Ratio
+# ===============================
+fig = px.line(
+    df_gear,
+    x="Periode_Label",
+    y="GR_KUR_PEN",
+    markers=True
+)
+
+fig.update_layout(
+    xaxis_title="Periode",
+    yaxis_title="Gearing Ratio KUR dan PEN",
+    yaxis=dict(ticksuffix="x"),  # misal ratio dikali 1
+    hovermode="x unified"
+)
+
+fig.update_xaxes(
+    type="category",
+    categoryorder="array",
+    categoryarray=df_gear["Periode_Label"].tolist(),
+    tickangle=-45
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ===============================
+# TABEL HASIL
+# ===============================
+with st.expander("📋 Tabel Gearing Ratio KUR dan PEN", expanded=False):
+
+        st.dataframe(
+            df_gear.style.format({
+                "KUR_PEN_Total_Rp": "Rp {:,.2f}",
+                "Ekuitas_Rp": "Rp {:,.2f}",
+                "GR_KUR_PEN": "{:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # ===============================
+        # DOWNLOAD
+        # ===============================
+        st.download_button(
+            "⬇️ Download Hasil Gearing Ratio KUR dan PEN",
+            df_gear.to_csv(index=False).encode("utf-8"),
+            "gearing_ratio_kurpen.csv",
+            "text/csv"
+        )
+
+#==========================================================================================================================
+# ===============================
+# FOOTER
+# ===============================
+st.markdown("---")
+
+st.markdown(
+    """
+    <div style="text-align:center; color:gray; font-size:13px;">
+        © 2026 | Dashboard Gearing Ratio KUR & PEN<br>
+        Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
