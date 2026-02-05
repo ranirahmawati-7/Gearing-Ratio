@@ -618,7 +618,7 @@ def bagian_2_penjaminan():
         st.markdown(
             """
             <h1 style="margin-bottom:0; color:#1f4e79;">
-                Dashboard Outstending Penjamin
+                Dashboard Outstanding Penjamin
             </h1>
             <p style="margin-top:0; font-size:16px; color:gray;">
                 Analisis Outstending Penjamin (Tenor, Bank, Issued Year, Jenis Kredit, Kota, Jenis Polis dan Proyeksi)
