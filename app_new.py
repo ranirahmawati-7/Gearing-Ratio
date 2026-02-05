@@ -38,7 +38,7 @@ st.image(
     caption="Contoh format file Excel (.xlsx) yang didukung",
     use_container_width=True
 )
-st.title("📊 Summary Tend Gearing Ratio")
+st.title("📊 Summary Trend Gearing Ratio")
 
 # ===============================
 # UPLOAD FILE
