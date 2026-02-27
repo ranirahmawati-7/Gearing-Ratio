@@ -582,6 +582,88 @@ def bagian_1_proyeksi():
     
     #================================================================================================================================================
     #===================================================================================================================================================
+
+ # ===============================
+    # AGREGASI KPP UNTUK Gearing Ratio
+    # ===============================
+    st.subheader("📈 Gearing Ratio KPP")
+    
+    # Ambil KPP Gen 1 + KUR Gen 2 untuk numerator
+    df_kpp_num = df_f[df_f["Jenis"].isin(["KPP Gen 1", "KPP Gen 2"])]
+    
+    # Jumlahkan Value per Periode_Label (numerator)
+    df_kpp_num_agg = (
+        df_kpp_num.groupby(["Periode_Label"], as_index=False)
+        .agg(KPP_Total_Rp=("Value", "sum"))
+    )
+    
+    # Ambil Ekuitas KPP (asumsi ada di df_f, misal Jenis == "Ekuitas KPP")
+    df_ekuitas = df_f[df_f["Jenis"] == "Ekuitas KPP"]
+    
+    # Gabungkan numerator dan ekuitas berdasarkan Periode_Label
+    df_gear = pd.merge(
+        df_kpp_num_agg,
+        df_ekuitas[["Periode_Label", "Value"]].rename(columns={"Value": "Ekuitas_Rp"}),
+        on="Periode_Label",
+        how="left"
+    )
+    
+    # Hitung Gearing Ratio
+    df_gear["Gearing_Ratio"] = df_gear["KPP_Total_Rp"] / df_gear["Ekuitas_Rp"]
+    
+    # ===============================
+    # GRAFIK Gearing Ratio
+    # ===============================
+    fig = px.line(
+        df_gear,
+        x="Periode_Label",
+        y="Gearing_Ratio",
+        markers=True
+    )
+    
+    fig.update_layout(
+        xaxis_title="Periode",
+        yaxis_title="Gearing Ratio KPP",
+        yaxis=dict(ticksuffix="x"),  # misal ratio dikali 1
+        hovermode="x unified"
+    )
+    
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=df_gear["Periode_Label"].tolist(),
+        tickangle=-45
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # ===============================
+    # TABEL HASIL
+    # ===============================
+    with st.expander("📋 Tabel Gearing Ratio KPP", expanded=False):
+    
+            st.dataframe(
+                df_gear.style.format({
+                    "KPP_Total_Rp": "Rp {:,.2f}",
+                    "Ekuitas_Rp": "Rp {:,.2f}",
+                    "Gearing_Ratio": "{:.2f}"
+                }),
+                use_container_width=True
+            )
+            
+            # ===============================
+            # DOWNLOAD
+            # ===============================
+            st.download_button(
+                "⬇️ Download Hasil Gearing Ratio KPP",
+                df_gear.to_csv(index=False).encode("utf-8"),
+                "gearing_ratio_kpp.csv",
+                "text/csv"
+            )
+    
+    #================================================================================================================================================
+    #===================================================================================================================================================
+    
     
     # ===========================================
     # AGREGASI KUR UNTUK Gearing Ratio KUR & PEN
