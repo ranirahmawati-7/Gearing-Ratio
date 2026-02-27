@@ -715,7 +715,7 @@ def bagian_2_penjaminan():
         # MAPPING BERDASARKAN POSISI KOLOM
         # ===============================
         COL_PERIODE = cols[0]
-        COL_KURPEN = cols[1]
+        COL_KURPENKPP = cols[1]
         COL_DIMENSI = cols[2]   # <<< KUNCI UTAMA
         COL_METRICS = "Metrics"
         COL_VALUE = "Value"
@@ -724,7 +724,7 @@ def bagian_2_penjaminan():
     
         df = df_raw.rename(columns={
             COL_PERIODE: "Periode",
-            COL_KURPEN: "KUR/PEN",
+            COL_KURPENKPP: "KUR/PEN/KPP",
             COL_DIMENSI: "Dimensi"
         })
     
@@ -768,7 +768,7 @@ def bagian_2_penjaminan():
     
         with c2:
             kp = st.multiselect(
-                "🏦 KUR / PEN",
+                "🏦 KUR / PEN / KPP",
                 sorted(df["KUR/PEN"].dropna().unique()),
                 default=sorted(df["KUR/PEN"].dropna().unique()),
                 key=f"kp_{sheet}"
@@ -784,7 +784,7 @@ def bagian_2_penjaminan():
     
         df_f = df[
             df["Periode"].isin(per) &
-            df["KUR/PEN"].isin(kp) &
+            df["KUR/PEN/KPP"].isin(kp) &
             df["Dimensi"].isin(dim)
         ]
     
