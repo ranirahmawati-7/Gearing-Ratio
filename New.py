@@ -22,7 +22,7 @@ def bagian_1_proyeksi():
         st.markdown(
             """
             <h1 style="margin-bottom:0; color:#1f4e79;">
-                Dashboard Gearing Ratio KUR & PEN
+                Dashboard Gearing Ratio KUR, PEN & KPP
             </h1>
             <p style="margin-top:0; font-size:16px; color:gray;">
                 Analisis Outstanding, Ekuitas, dan Trend Gearing Ratio berbasis data periodik
@@ -275,6 +275,82 @@ def bagian_1_proyeksi():
     
     #=============================================================================================================================
     #========================================================================================================================================
+
+ # ===============================
+    # AGREGASI KHUSUS KPP (AUDITED PRIORITY)
+    # ===============================
+    st.subheader("📈 OS Penjaminan KPP")
+    
+    df_kur = df_f[df_f["Jenis"].isin(["KPP Gen 1", "KPP Gen 2"])]
+    
+    # Urutkan: audited diutamakan
+    df_kpp_sorted = df_kpp.sort_values(
+        ["SortKey", "Is_Audited"],
+        ascending=[True, False]
+    )
+    
+    # Ambil audited jika ada, jika tidak ambil data biasa
+    df_kpp_agg = (
+        df_kpp_sorted
+        .groupby(["SortKey", "Periode_Label"], as_index=False)
+        .agg(OS_KPP_Rp=("Value", "last"))
+        .sort_values("SortKey")
+    )
+    
+    df_kpp_agg["OS_KPP_T"] = df_kpp_agg["OS_KPP_Rp"] / 1_000_000_000_000
+    
+    # ===============================
+    # GRAFIK
+    # ===============================
+    fig = px.area(
+        df_kpp_agg,
+        x="Periode_Label",
+        y="OS_KPP_T",
+        markers=True
+    )
+    
+    fig.update_layout(
+        xaxis_title="Periode",
+        yaxis_title="Outstanding KPP (Triliun)",
+        yaxis=dict(ticksuffix=" T"),
+        hovermode="x unified"
+    )
+    
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=df_kur_agg["Periode_Label"].tolist(),
+        tickangle=-45
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # ===============================
+    # TABEL HASIL OLAHAN
+    # ===============================
+    with st.expander("📋 Tabel Hasil Pengolahan OS Penjaminan KPP", expanded=False):
+    
+            st.dataframe(
+                df_kpp_agg.style.format({
+                    "OS_KPP_Rp": "Rp {:,.2f}",
+                    "OS_KPP_T": "{:.2f}"
+                }),
+                use_container_width=True
+            )
+            
+            # ===============================
+            # DOWNLOAD
+            # ===============================
+            st.download_button(
+                "⬇️ Download Hasil OS KPP",
+                df_kpp_agg.to_csv(index=False).encode("utf-8"),
+                "os_penjaminan_kpp.csv",
+                "text/csv"
+            )
+    
+    #=============================================================================================================================
+    #========================================================================================================================================
+    
     
     # ===============================
     # AGREGASI KHUSUS KUR (AUDITED PRIORITY)
@@ -427,7 +503,7 @@ def bagian_1_proyeksi():
     #===================================================================================================================================================
     
     # ===============================
-    # AGREGASI KUR UNTUK GEaring Ratio
+    # AGREGASI KUR UNTUK Gearing Ratio
     # ===============================
     st.subheader("📈 Gearing Ratio KUR")
     
@@ -455,7 +531,7 @@ def bagian_1_proyeksi():
     df_gear["Gearing_Ratio"] = df_gear["KUR_Total_Rp"] / df_gear["Ekuitas_Rp"]
     
     # ===============================
-    # GRAFIK GEaring Ratio
+    # GRAFIK Gearing Ratio
     # ===============================
     fig = px.line(
         df_gear,
@@ -508,7 +584,7 @@ def bagian_1_proyeksi():
     #===================================================================================================================================================
     
     # ===========================================
-    # AGREGASI KUR UNTUK GEaring Ratio KUR & PEN
+    # AGREGASI KUR UNTUK Gearing Ratio KUR & PEN
     # ===========================================
     st.subheader("📈 Gearing Ratio KUR & PEN")
     
@@ -593,7 +669,7 @@ def bagian_1_proyeksi():
     st.markdown(
         """
         <div style="text-align:center; color:gray; font-size:13px;">
-            © 2026 | PT.Askrindo<br>
+            © 2026 | PT. Askrindo<br>
             by @Rehanda Umamil Hadi & @Rani Rahmawati<br>
             Developed with ❤️ using <b>Streamlit</b> & <b>Plotly</b>
         </div>
