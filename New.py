@@ -281,7 +281,7 @@ def bagian_1_proyeksi():
     # ===============================
     st.subheader("📈 OS Penjaminan KPP")
     
-    df_kur = df_f[df_f["Jenis"].isin(["KPP Gen 1", "KPP Gen 2"])]
+    df_kpp = df_f[df_f["Jenis"].isin(["KPP Gen 1", "KPP Gen 2"])]
     
     # Urutkan: audited diutamakan
     df_kpp_sorted = df_kpp.sort_values(
