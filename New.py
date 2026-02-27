@@ -769,8 +769,8 @@ def bagian_2_penjaminan():
         with c2:
             kp = st.multiselect(
                 "🏦 KUR / PEN / KPP",
-                sorted(df["KUR/PEN"].dropna().unique()),
-                default=sorted(df["KUR/PEN"].dropna().unique()),
+                sorted(df["KUR/PEN/KPP"].dropna().unique()),
+                default=sorted(df["KUR/PEN/KPP"].dropna().unique()),
                 key=f"kp_{sheet}"
             )
     
