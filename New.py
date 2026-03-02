@@ -779,7 +779,7 @@ def bagian_2_penjaminan():
                 Dashboard Outstanding Penjamin
             </h1>
             <p style="margin-top:0; font-size:16px; color:gray;">
-                Analisis Outstending Penjamin (Tenor, Bank, Issued Year, Jenis Kredit, Kota, Jenis Polis dan Proyeksi)
+                Analisis Outstanding Penjamin (Tenor, Bank, Issued Year, Jenis Kredit, Kota, Jenis Polis dan Proyeksi)
             </p>
             """,
             unsafe_allow_html=True
