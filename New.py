@@ -785,7 +785,7 @@ def bagian_2_penjaminan():
             unsafe_allow_html=True
         )
     
-    st.info("Website ini akan otomatis menampilkan dashboard untuk perhitungan Outstending Penjamin setelah anda mengupload file dengan format xlxs atau csv, dan pastikan format tabel yang akan diinput sesuai dengan contoh")
+    st.info("Website ini akan otomatis menampilkan dashboard untuk perhitungan Outstanding Penjamin setelah anda mengupload file dengan format xlxs atau csv, dan pastikan format tabel yang akan diinput sesuai dengan contoh")
     st.image(
         "gambar/xlsxPic2.png",
         caption="Contoh format file Excel (.xlsx) yang didukung",
